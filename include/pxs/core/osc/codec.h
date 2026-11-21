@@ -24,4 +24,7 @@ Bytes encode(const Message &message);
 // Decode a message or bundle, flattening nested bundles. Malformed or oversized packets are refused.
 bool decode(const Bytes &packet, std::vector<Message> &out);
 
+// Match OSC address patterns (`*`, `?`, sets, and brace alternatives) by path segment.
+bool match(const std::string &pattern, const std::string &address);
+
 } // namespace pxs::core::osc

@@ -1,6 +1,7 @@
 #include <pxs/core/osc/codec.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <type_traits>
 
@@ -147,6 +148,164 @@ bool decodeInto(const Bytes &packet, std::vector<Message> &out, int depth)
     return true;
 }
 
+constexpr std::size_t kMaxPatternChars = 8192;
+constexpr std::size_t kMaxSegmentChars = 4096;
+
+std::u32string codepoints(const std::string &text)
+{
+    std::u32string out;
+    for (std::size_t i = 0; i < text.size();) {
+        const auto lead = static_cast<unsigned char>(text[i]);
+        if (lead < 0x80) {
+            out.push_back(char32_t(lead));
+            ++i;
+            continue;
+        }
+        int count = lead >= 0xf0 ? 4 : lead >= 0xe0 ? 3 : lead >= 0xc2 ? 2 : 0;
+        char32_t value = count == 2 ? char32_t(lead & 0x1f) : count == 3 ? char32_t(lead & 0x0f) : char32_t(lead & 0x07);
+        bool valid = count != 0 && i + std::size_t(count) <= text.size();
+        for (int j = 1; valid && j < count; ++j) {
+            const auto next = static_cast<unsigned char>(text[i + std::size_t(j)]);
+            if ((next & 0xc0) != 0x80) valid = false;
+            else value = (value << 6) | char32_t(next & 0x3f);
+        }
+        if (valid && ((count == 2 && value < 0x80) || (count == 3 && value < 0x800) ||
+                      (count == 4 && value < 0x10000) || value > 0x10ffff ||
+                      (value >= 0xd800 && value <= 0xdfff))) valid = false;
+        if (valid) {
+            out.push_back(value);
+            i += std::size_t(count);
+        } else {
+            out.push_back(0xfffd);
+            ++i;
+        }
+    }
+    return out;
+}
+
+std::vector<std::u32string> splitPath(const std::u32string &path)
+{
+    std::vector<std::u32string> parts;
+    std::size_t start = 0;
+    for (std::size_t i = 0; i <= path.size(); ++i) {
+        if (i == path.size() || path[i] == U'/') {
+            parts.push_back(path.substr(start, i - start));
+            start = i + 1;
+        }
+    }
+    return parts;
+}
+
+struct PatternToken {
+    enum class Kind { Char, Any, Star, Set, Alt } kind = Kind::Char;
+    char32_t character = 0;
+    std::u32string set;
+    bool negate = false;
+    std::vector<std::u32string> alternatives;
+};
+
+bool inSet(const PatternToken &token, char32_t character)
+{
+    bool found = false;
+    for (std::size_t i = 0; i < token.set.size(); ++i) {
+        if (i + 2 < token.set.size() && token.set[i + 1] == U'-') {
+            found |= character >= token.set[i] && character <= token.set[i + 2];
+            i += 2;
+        } else {
+            found |= character == token.set[i];
+        }
+    }
+    return found != token.negate;
+}
+
+bool tokenize(const std::u32string &pattern, std::vector<PatternToken> &out)
+{
+    for (std::size_t i = 0; i < pattern.size(); ++i) {
+        const char32_t c = pattern[i];
+        PatternToken token;
+        if (c == U'*') {
+            if (!out.empty() && out.back().kind == PatternToken::Kind::Star) continue;
+            token.kind = PatternToken::Kind::Star;
+        } else if (c == U'?') {
+            token.kind = PatternToken::Kind::Any;
+        } else if (c == U'[') {
+            const auto end = pattern.find(U']', i);
+            if (end == std::u32string::npos) return false;
+            token.kind = PatternToken::Kind::Set;
+            token.set = pattern.substr(i + 1, end - i - 1);
+            token.negate = !token.set.empty() && token.set.front() == U'!';
+            if (token.negate) token.set.erase(token.set.begin());
+            i = end;
+        } else if (c == U'{') {
+            const auto end = pattern.find(U'}', i);
+            if (end == std::u32string::npos) return false;
+            token.kind = PatternToken::Kind::Alt;
+            const auto body = pattern.substr(i + 1, end - i - 1);
+            std::size_t start = 0;
+            for (std::size_t j = 0; j <= body.size(); ++j) {
+                if (j == body.size() || body[j] == U',') {
+                    token.alternatives.push_back(body.substr(start, j - start));
+                    start = j + 1;
+                }
+            }
+            i = end;
+        } else {
+            token.character = c;
+        }
+        out.push_back(std::move(token));
+    }
+    return true;
+}
+
+bool matchSegment(const std::u32string &pattern, const std::u32string &address)
+{
+    if (pattern.find_first_of(U"*?[{") == std::u32string::npos) return pattern == address;
+    std::vector<PatternToken> tokens;
+    if (!tokenize(pattern, tokens)) return false;
+    const std::size_t n = address.size();
+    std::vector<unsigned char> at(n + 1, 0), next(n + 1, 0);
+    at[0] = 1;
+    for (const auto &token : tokens) {
+        std::fill(next.begin(), next.end(), 0);
+        bool any = false;
+        if (token.kind == PatternToken::Kind::Star) {
+            bool on = false;
+            for (std::size_t i = 0; i <= n; ++i) {
+                on = on || at[i];
+                next[i] = on;
+                any = any || on;
+            }
+        } else {
+            for (std::size_t i = 0; i <= n; ++i) {
+                if (!at[i]) continue;
+                switch (token.kind) {
+                case PatternToken::Kind::Char:
+                    if (i < n && address[i] == token.character) next[i + 1] = any = true;
+                    break;
+                case PatternToken::Kind::Any:
+                    if (i < n) next[i + 1] = any = true;
+                    break;
+                case PatternToken::Kind::Set:
+                    if (i < n && inSet(token, address[i])) next[i + 1] = any = true;
+                    break;
+                case PatternToken::Kind::Alt:
+                    for (const auto &alternative : token.alternatives) {
+                        if (alternative.size() <= n - i &&
+                            std::equal(alternative.begin(), alternative.end(), address.begin() + std::ptrdiff_t(i)))
+                            next[i + alternative.size()] = any = true;
+                    }
+                    break;
+                case PatternToken::Kind::Star:
+                    break;
+                }
+            }
+        }
+        if (!any) return false;
+        at.swap(next);
+    }
+    return at[n] != 0;
+}
+
 } // namespace
 
 Bytes encode(const Message &message)
@@ -219,5 +378,20 @@ Bytes encode(const Message &message)
 }
 
 bool decode(const Bytes &packet, std::vector<Message> &out) { return decodeInto(packet, out, 0); }
+
+bool match(const std::string &patternUtf8, const std::string &addressUtf8)
+{
+    const auto pattern = codepoints(patternUtf8);
+    const auto address = codepoints(addressUtf8);
+    if (pattern.size() > kMaxPatternChars || address.size() > kMaxPatternChars) return false;
+    const auto patternParts = splitPath(pattern);
+    const auto addressParts = splitPath(address);
+    if (patternParts.size() != addressParts.size()) return false;
+    for (std::size_t i = 0; i < patternParts.size(); ++i) {
+        if (patternParts[i].size() > kMaxSegmentChars || addressParts[i].size() > kMaxSegmentChars ||
+            !matchSegment(patternParts[i], addressParts[i])) return false;
+    }
+    return true;
+}
 
 } // namespace pxs::core::osc
