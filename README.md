@@ -1,7 +1,8 @@
 # pxs-core
 
-Portable C++ building blocks shared by Pixel Stereo applications. This first
-module provides OSC packet encoding and decoding without Qt or platform APIs.
+Portable C++ building blocks shared by Pixel Stereo applications. The OSC
+module provides packet encoding, decoding, and address-pattern matching
+without Qt or platform APIs.
 
 ```cmake
 add_subdirectory(pxs-core)
