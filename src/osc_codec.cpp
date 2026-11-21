@@ -173,7 +173,13 @@ std::u32string codepoints(const std::string &text)
                       (count == 4 && value < 0x10000) || value > 0x10ffff ||
                       (value >= 0xd800 && value <= 0xdfff))) valid = false;
         if (valid) {
-            out.push_back(value);
+            if (value > 0xffff) {
+                value -= 0x10000;
+                out.push_back(0xd800 + (value >> 10));
+                out.push_back(0xdc00 + (value & 0x3ff));
+            } else {
+                out.push_back(value);
+            }
             i += std::size_t(count);
         } else {
             out.push_back(0xfffd);
