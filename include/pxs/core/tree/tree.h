@@ -69,6 +69,9 @@ public:
     std::string clip;                       // "both" when the range is enforced (CLIPMODE)
     std::function<ValueList()> get;         // the value, one entry per argument
     std::function<bool(const ValueList &)> set; // false: refused (a locked layer, a value that does not fit)
+    // The application's own attributes (an extension of OSCQuery), asked with ?NAME: each gives a JSON value as text, or nothing
+    // (no value for it)
+    std::map<std::string, std::function<std::optional<std::string>()>> attributes;
 
     std::string displayLabel() const { return label.empty() ? m_name : label; }
     bool animatable() const { return m_parameter && m_parameter->info().animatable; } // a timeline can drive it
@@ -115,6 +118,8 @@ public:
 
     // Hands an OSC message to every method its address names that can be written; returns how many accepted it
     int apply(const osc::Message &message) const;
+    // The same, with the arguments already as values (a preset recalled, a mapping)
+    int apply(const std::string &address, const ValueList &args) const;
     // The OSC message that says what a method holds now (the feedback to send)
     static osc::Message message(const Node &node);
 
