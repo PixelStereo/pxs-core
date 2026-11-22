@@ -2,6 +2,8 @@
 
 #include "check.h"
 
+#include <cmath>
+
 using namespace pxs::core;
 using namespace pxs::core::tree;
 using Type = ParamInfo::Type;
