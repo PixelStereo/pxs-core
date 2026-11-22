@@ -10,3 +10,12 @@ path = "**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Pixel Stereo"
 SPDX-License-Identifier = "AGPL-3.0-only OR LicenseRef-PixelStereo-Commercial"
+
+# Vendored, pinned, unmodified: nlohmann/json 3.11.3 (single header, MIT). Used only inside pxs-core's own sources: none of its
+# types is in a public header, so a consumer needs nothing of it. SHA-256 of third_party/nlohmann/json.hpp:
+# 9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6 (identical to the release asset and to the file at the tag v3.11.3).
+[[annotations]]
+path = "third_party/nlohmann/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2013-2023 Niels Lohmann <https://nlohmann.me>"
+SPDX-License-Identifier = "MIT"

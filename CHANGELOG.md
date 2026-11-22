@@ -3,6 +3,26 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.6.0
+
+### Added
+- `pxs/core/tree/oscquery.h`: what an OSCQuery client is told about a tree, as JSON text: `describeJson` (FULL_PATH, CONTENTS, ACCESS,
+  TYPE, VALUE, RANGE, CLIPMODE, DESCRIPTION, EXTENDED_TYPE, UNIT, DEFAULT_VALUE, TAGS, PXS_LOCKED and the node's own attributes),
+  `attributeJson` (?VALUE, ?TYPE…), `valueJson`/`valuesJson` (the table of the OSCQuery proposal by type tag: a colour as #RRGGBBAA,
+  arrays as arrays), `hostInfoJson`, `defaultExtensionsJson`. `Node::attributes` (the application's own attributes, each a JSON value
+  as text). Keys are in alphabetical order.
+- `pxs/core/tree/preset.h`: `Preset`, `capture`, `recall` (a preset by address: values, then actions) and its JSON, read
+  tolerantly. `Tree::apply(address, values)` (arguments already as values).
+- nlohmann/json 3.11.3 vendored in `third_party/nlohmann` (MIT, checksum recorded in `REUSE.toml` and its README), used inside the library
+  only: no public header includes it, a consumer needs nothing of it.
+- Checked against the Qt tree like the tree itself: the differential harness now also compares the description of every node, the
+  attributes, `HOST_INFO`, the captured preset, the recall counts and the preset read back from its text, on trees that include
+  hand-filled nodes of every type tag (r, h, c, m, b, T, [ff]i…) with tags, units, defaults, ranges and attributes: 10.6 million
+  comparisons, no difference.
+- Fuzz target: arbitrary text as a preset, an attribute and a HOST_INFO member. It found on its first run that the JSON library throws on a
+  string that is not valid UTF-8 (an OSC string from the network can be anything): the JSON is now written with U+FFFD in place of invalid
+  bytes, and nothing in the library throws. The crashing input is in the seed corpus and a test.
+
 ## 0.5.0
 
 ### Added

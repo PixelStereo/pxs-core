@@ -271,8 +271,13 @@ int Tree::apply(const osc::Message &message) const
     ValueList args;
     args.reserve(message.args.size());
     for (const osc::Value &a : message.args) args.push_back(fromOsc(a));
+    return apply(message.address, args);
+}
+
+int Tree::apply(const std::string &address, const ValueList &args) const
+{
     int accepted = 0;
-    for (Node *node : match(message.address))
+    for (Node *node : match(address))
         if ((node->access & 2) && !node->locked && node->set) {
             // A write may cause another one (a mapping that drives a second node): each keeps its own state
             const Node *outer = m_applying;

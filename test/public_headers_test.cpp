@@ -4,6 +4,8 @@
 #include <pxs/core/midi/message.h>
 #include <pxs/core/osc/codec.h>
 #include <pxs/core/osc/names.h>
+#include <pxs/core/tree/oscquery.h>
+#include <pxs/core/tree/preset.h>
 #include <pxs/core/tree/tree.h>
 #include <pxs/core/value.h>
 #include <pxs/core/version.h>
