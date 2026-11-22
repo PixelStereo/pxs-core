@@ -3,6 +3,16 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.9.0
+
+### Added
+- **The C interface** (`pxs/c/pxs.h`, `pxs-core::c`, and `libpxs_c` with `-DPXS_CORE_BUILD_SHARED_C=ON`): 30 functions for a program that is not C++ (a Flutter
+  application through `dart:ffi`): the OSC codec, the address space (parameters, actions, signals, OSC applied to it, the feedback as OSC
+  packets, what an OSCQuery client is told, locks), presets, DMX frames, MIDI messages, the WebSocket accept key. Plain structs, status codes,
+  no exception across the boundary, ownership written down (`docs/c-api.md`, `docs/ffigen.yaml`). Tested from C++ and from a C99 program with the
+  header's warnings on; the shared library exports only the `pxs_*` functions (checked in CI on Linux, macOS and Windows) and is loaded by a C
+  program as `dart:ffi` loads it.
+
 ## 0.8.0
 
 ### Added

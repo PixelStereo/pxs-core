@@ -56,6 +56,29 @@ jobs:
       - uses: actions/checkout@v4
       - run: pipx run --spec "reuse==6.3.0" reuse lint
 
+  # The C interface as a shared library, the way dart:ffi loads it: built, loaded by a C program, and exporting only the pxs_* functions.
+  shared-c:
+    name: Shared C library (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPXS_CORE_BUILD_SHARED_C=ON -DPXS_CORE_WARNINGS_AS_ERRORS=ON
+      - run: cmake --build build --config Release --parallel
+      - run: ctest --test-dir build --build-config Release --output-on-failure -R "c_api"
+      - name: Only the pxs_* functions are exported
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          lib=$(find build -maxdepth 1 \( -name 'libpxs_c.so' -o -name 'libpxs_c.dylib' \) | head -1)
+          test -n "$lib"
+          if [ "$RUNNER_OS" = macOS ]; then symbols=$(nm -gU "$lib" | awk '{print $3}' | sed 's/^_//'); else symbols=$(nm -D --defined-only "$lib" | awk '$2 != "A" {print $3}'); fi # (an absolute symbol is the version node's name)
+          echo "$symbols" | grep -v '^pxs_' | grep -v '^$' && { echo "exports more than pxs_*"; exit 1; } || true
+          test "$(echo "$symbols" | grep -c '^pxs_')" -eq "$(grep -c '^PXS_API' include/pxs/c/pxs.h)"
+
   sanitizers:
     name: Sanitizers (ASan, UBSan)
     runs-on: ubuntu-latest

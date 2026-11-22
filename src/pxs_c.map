@@ -1,0 +1,6 @@
+PXS_C_1 {
+    global:
+        pxs_*;
+    local:
+        *;
+};
