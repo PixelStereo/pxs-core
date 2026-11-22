@@ -3,6 +3,30 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.5.0
+
+### Added
+- `pxs-core::tree`: `Parameter`, `ParamInfo`, `Tree`, `Node` and the OSC bridge (`toOsc`, `fromOsc`, `toOscArguments`), moved from
+  pxs-qt's `pxs::Tree` / `Parameter` in `std::string` and `Value`: no Qt, no global state (the change feed is an instance given to
+  the parameter). A node's range is structured (`ArgRange`: MIN, MAX or VALS) and the locks are lists of addresses; the JSON of
+  OSCQuery and of the presets comes with the JSON stage (0.6).
+- Checked against the Qt tree it comes from with a differential harness: 3000 random trees (every parameter type, access, limits,
+  values, choices, defaults, units, locks) with 40 random operations each (OSC messages with exact and pattern addresses, resets,
+  locks, signals, structure changes): every value, write count, flag, range, feed, observer, structure and output notification
+  equal over 2.2 million comparisons. The harness will run in pxs-qt's CI until its own tree is replaced.
+- Fuzz target: OSC packets applied to a tree with a parameter of every type.
+
+### Changed, against the Qt tree (deliberate; the harness lists them as its "loose" mode)
+- An OSC argument that is no number — text that does not read as one, a blob, a Nil — is **refused** by a Float or Int parameter
+  (the Qt tree wrote 0 for any text: `QVariant::canConvert<double>` is true for every string).
+- A message with **no argument** (or a Nil) no longer selects the **first key** of a Choice parameter; it is refused.
+- ±infinity is refused by an Int parameter (the Qt tree wrote an unspecified integer; a Float parameter already refused it).
+- A Text parameter given an OSC float writes the shortest text of the float ("-108.8916"), not of its widening to a double
+  ("-108.8916015625").
+- A Bool written directly with a double follows `!= 0` (0.3 is on; QVariant rounded it to off). Choice keys are matched in lower
+  case ASCII (QString lowercased all of Unicode).
+- Written values are `Value`s of a given kind: a Float writes a double, an Int an int32, a Bool a bool, a Choice or Text a string.
+
 ## 0.4.0
 
 ### Added

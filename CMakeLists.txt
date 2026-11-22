@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(pxs-core VERSION 0.4.0 LANGUAGES CXX
+project(pxs-core VERSION 0.5.0 LANGUAGES CXX
         DESCRIPTION "Portable wire-format codecs shared by Pixel Stereo applications (no Qt, no platform API)")
 
 # A parent that already pulled pxs-core in (pxs-qt, then an application that also adds it directly) must not define the
@@ -64,6 +64,11 @@ pxs_core_module(value
     SOURCES src/value.cpp
     HEADERS include/pxs/core/value.h)
 
+pxs_core_module(tree
+    SOURCES src/tree.cpp src/tree_parameter.cpp src/tree_osc_bridge.cpp
+    HEADERS include/pxs/core/tree/tree.h include/pxs/core/tree/parameter.h include/pxs/core/tree/osc_bridge.h)
+target_link_libraries(pxs_core_tree PUBLIC pxs-core::osc pxs-core::value pxs-core::feed)
+
 pxs_core_module(midi
     SOURCES src/midi_message.cpp
     HEADERS include/pxs/core/midi/message.h)
@@ -88,7 +93,7 @@ if(PXS_CORE_BUILD_FUZZERS)
 endif()
 
 if(PXS_CORE_INSTALL)
-    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_feed pxs_core_value EXPORT pxs-core-targets
+    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_feed pxs_core_value pxs_core_tree EXPORT pxs-core-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY include/pxs DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/pxs/core/version.h

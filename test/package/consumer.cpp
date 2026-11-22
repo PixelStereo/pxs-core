@@ -1,6 +1,7 @@
 #include <pxs/core/dmx/frame.h>
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/midi/message.h>
+#include <pxs/core/tree/tree.h>
 #include <pxs/core/value.h>
 #include <pxs/core/osc/codec.h>
 #include <pxs/core/websocket/frame.h>
@@ -19,5 +20,8 @@ int main()
     pxs::core::ChangeFeed feed;
     const bool quiet = !feed.listening();
     const bool value = pxs::core::Value("0.5").number() == 0.5;
-    return osc && ws && dmx && midi && quiet && value ? 0 : 1;
+    pxs::core::tree::Tree tree;
+    tree.addSignal("/beat", "f");
+    const bool treeOk = tree.find("/beat") != nullptr && tree.fire("/beat", {pxs::core::Value(1.0f)});
+    return osc && ws && dmx && midi && quiet && value && treeOk ? 0 : 1;
 }

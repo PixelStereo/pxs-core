@@ -87,7 +87,7 @@ jobs:
       - run: cmake --build build --parallel
       - name: Run
         run: |
-          for t in osc dmx websocket midi value; do
+          for t in osc dmx websocket midi value tree; do
             mkdir -p "work/$t"
             ./build/fuzz/fuzz_$t -max_total_time=60 -timeout=5 "work/$t" fuzz/corpus/$t
           done
