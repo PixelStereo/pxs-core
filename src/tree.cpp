@@ -152,7 +152,7 @@ Node &Tree::add(const std::string &path, std::unique_ptr<Parameter> parameter)
     node.type = oscType(info);
     node.access = info.access;
     if (info.isNumber() && !info.unbounded) {
-        node.range = {ArgRange{Value(info.min), Value(info.max), {}}};
+        node.range = {ArgRange{Value(info.min), Value(info.max), {}, {}}};
         if (info.access & ParamInfo::Write) node.clip = "both"; // a write is kept within the limits
     }
     // What it is: said, or its place among the components of a color or a point
