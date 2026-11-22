@@ -13,10 +13,11 @@ pulling a GUI toolkit; the Qt applications use the same code through the adapter
 | `pxs-core::websocket` | `pxs/core/websocket/frame.h` | RFC 6455 frames and the handshake accept key |
 | `pxs-core::midi` | `pxs/core/midi/message.h` | MIDI channel messages (control change, notes, pitch bend, program change): parse and build |
 | `pxs-core::value` | `pxs/core/value.h` | `Value`: the closed set of types of the address space (bool, ints, floats, string, vec2/3/4, blob) and its conversions |
+| `pxs-core::tree` | `pxs/core/tree/tree.h`, `parameter.h` | the address space: `Tree`, `Node`, `Parameter` (parameters, actions, signals), OSC applied to it, locks, observers |
 | `pxs-core::feed` | `pxs/core/feed/change_feed.h` | header-only observer of changes (the OSC feedback), lock-free, safe to destroy after `ignore` |
 
 ```cmake
-add_subdirectory(third_party/pxs-core)          # or find_package(pxs-core 0.4 REQUIRED) after `cmake --install`
+add_subdirectory(third_party/pxs-core)          # or find_package(pxs-core 0.5 REQUIRED) after `cmake --install`
 target_link_libraries(MyTool PRIVATE pxs-core::osc)
 ```
 
