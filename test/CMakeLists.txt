@@ -4,6 +4,9 @@ function(pxs_core_test name)
     target_include_directories(${name}_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_compile_definitions(${name}_test PRIVATE PXS_GOLDEN_FILE="${CMAKE_CURRENT_SOURCE_DIR}/golden/vectors.tsv")
     pxs_core_harden(${name}_test)
+    if(MSVC)
+        target_compile_definitions(${name}_test PRIVATE _CRT_SECURE_NO_WARNINGS) # getenv in the robustness test
+    endif()
     add_test(NAME ${name} COMMAND ${name}_test)
 endfunction()
 
