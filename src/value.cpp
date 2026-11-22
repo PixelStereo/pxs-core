@@ -112,9 +112,9 @@ std::optional<double> parseNumber(std::string_view text)
 std::optional<double> Value::number() const
 {
     switch (kind()) {
-    case Kind::Bool: return *get<bool>() ? 1.0 : 0.0;
-    case Kind::Int32: return double(*get<std::int32_t>());
-    case Kind::Int64: return double(*get<std::int64_t>());
+    case Kind::Boolean: return *get<bool>() ? 1.0 : 0.0;
+    case Kind::Integer32: return double(*get<std::int32_t>());
+    case Kind::Integer64: return double(*get<std::int64_t>());
     case Kind::Float: return double(*get<float>());
     case Kind::Double: return *get<double>();
     case Kind::String: return parseNumber(*get<std::string>());
@@ -125,9 +125,9 @@ std::optional<double> Value::number() const
 bool Value::truthy() const
 {
     switch (kind()) {
-    case Kind::Bool: return *get<bool>();
-    case Kind::Int32: return *get<std::int32_t>() != 0;
-    case Kind::Int64: return *get<std::int64_t>() != 0;
+    case Kind::Boolean: return *get<bool>();
+    case Kind::Integer32: return *get<std::int32_t>() != 0;
+    case Kind::Integer64: return *get<std::int64_t>() != 0;
     case Kind::Float: return std::isnan(*get<float>()) ? false : *get<float>() != 0.0f;
     case Kind::Double: return std::isnan(*get<double>()) ? false : *get<double>() != 0.0;
     case Kind::String: {
@@ -143,9 +143,11 @@ std::string formatDouble(double v)
     if (std::isnan(v)) return "nan";
     if (std::isinf(v)) return v < 0 ? "-inf" : "inf";
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
-    char buf[64];
-    const auto r = std::to_chars(buf, buf + sizeof buf, v);
-    if (r.ec == std::errc()) return std::string(buf, r.ptr);
+    {
+        char shortest[64];
+        const auto r = std::to_chars(shortest, shortest + sizeof shortest, v);
+        if (r.ec == std::errc()) return std::string(shortest, r.ptr);
+    }
 #endif
     // The shortest of 15, 16, 17 significant digits that reads back the same; snprintf follows the locale for the decimal
     // point, so it is put back to '.'.
@@ -169,9 +171,11 @@ std::string formatFloat(float v)
     if (std::isnan(v)) return "nan";
     if (std::isinf(v)) return v < 0 ? "-inf" : "inf";
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
-    char buf[64];
-    const auto r = std::to_chars(buf, buf + sizeof buf, v);
-    if (r.ec == std::errc()) return std::string(buf, r.ptr);
+    {
+        char shortest[64];
+        const auto r = std::to_chars(shortest, shortest + sizeof shortest, v);
+        if (r.ec == std::errc()) return std::string(shortest, r.ptr);
+    }
 #endif
     char buf2[64];
     const std::lconv *lc = std::localeconv();
@@ -191,9 +195,9 @@ std::string formatFloat(float v)
 std::string Value::text() const
 {
     switch (kind()) {
-    case Kind::Bool: return *get<bool>() ? "true" : "false";
-    case Kind::Int32: return std::to_string(*get<std::int32_t>());
-    case Kind::Int64: return std::to_string(*get<std::int64_t>());
+    case Kind::Boolean: return *get<bool>() ? "true" : "false";
+    case Kind::Integer32: return std::to_string(*get<std::int32_t>());
+    case Kind::Integer64: return std::to_string(*get<std::int64_t>());
     case Kind::Float: return formatFloat(*get<float>());
     case Kind::Double: return formatDouble(*get<double>());
     case Kind::String: return *get<std::string>();

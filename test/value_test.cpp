@@ -38,18 +38,18 @@ void goldenNumbersInText()
 
 void kinds()
 {
-    CHECK(Value().kind() == Value::Kind::Nil);
-    CHECK(Value(true).kind() == Value::Kind::Bool);
-    CHECK(Value(1).kind() == Value::Kind::Int32);
-    CHECK(Value(std::int64_t(1) << 40).kind() == Value::Kind::Int64);
-    CHECK(Value(1LL).kind() == Value::Kind::Int64);
-    CHECK(Value(1L).kind() == Value::Kind::Int64);
+    CHECK(Value().kind() == Value::Kind::Nothing);
+    CHECK(Value(true).kind() == Value::Kind::Boolean);
+    CHECK(Value(1).kind() == Value::Kind::Integer32);
+    CHECK(Value(std::int64_t(1) << 40).kind() == Value::Kind::Integer64);
+    CHECK(Value(1LL).kind() == Value::Kind::Integer64);
+    CHECK(Value(1L).kind() == Value::Kind::Integer64);
     CHECK(Value(1.5f).kind() == Value::Kind::Float);
     CHECK(Value(1.5).kind() == Value::Kind::Double);
     CHECK(Value("a").kind() == Value::Kind::String); // a literal is text, not a bool
     CHECK(Value(std::string("a")).kind() == Value::Kind::String);
-    CHECK(Value(Vec3{1, 2, 3}).kind() == Value::Kind::Vec3);
-    CHECK(Value(Blob{1, 2}).kind() == Value::Kind::Blob);
+    CHECK(Value(Vec3{1, 2, 3}).kind() == Value::Kind::Vector3);
+    CHECK(Value(Blob{1, 2}).kind() == Value::Kind::Bytes);
     CHECK(Value(static_cast<const char *>(nullptr)).get<std::string>()->empty());
 }
 

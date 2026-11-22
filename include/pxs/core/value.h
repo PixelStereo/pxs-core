@@ -36,7 +36,7 @@ class Value
 {
 public:
     using Variant = std::variant<Nil, bool, std::int32_t, std::int64_t, float, double, std::string, Vec2, Vec3, Vec4, Blob>;
-    enum class Kind { Nil, Bool, Int32, Int64, Float, Double, String, Vec2, Vec3, Vec4, Blob };
+    enum class Kind { Nothing, Boolean, Integer32, Integer64, Float, Double, String, Vector2, Vector3, Vector4, Bytes };
 
     Value() = default; // Nil
     Value(Nil) {}
