@@ -66,6 +66,18 @@ jobs:
       - run: ctest --test-dir build --output-on-failure
         env: { PXS_ROBUSTNESS_ITERATIONS: "400000" }
 
+  # The change feed is lock-free and its guarantee is about threads: only ThreadSanitizer can check it.
+  threads:
+    name: ThreadSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang++
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+      - run: cmake --build build --target change_feed_test --parallel
+      - run: ./build/test/change_feed_test
+
   fuzz:
     name: Fuzz (60 s each)
     runs-on: ubuntu-latest
@@ -75,7 +87,7 @@ jobs:
       - run: cmake --build build --parallel
       - name: Run
         run: |
-          for t in osc dmx websocket; do
+          for t in osc dmx websocket midi; do
             mkdir -p "work/$t"
             ./build/fuzz/fuzz_$t -max_total_time=60 -timeout=5 "work/$t" fuzz/corpus/$t
           done

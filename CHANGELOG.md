@@ -3,7 +3,13 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
-## Unreleased
+## 0.3.0
+
+### Added
+- `pxs-core::midi`: parse and build the channel messages of MIDI (moved from pxs-qt; the same bytes and values for every input
+  the old code handled). A value that is not a number is now 0 (it was unspecified).
+- `pxs-core::feed`: `ChangeFeed`, the observer of changes (moved from pxs-qt as an instance instead of a global; `ignore`
+  still returns only when the callbacks in flight are over). CI runs it under ThreadSanitizer.
 
 ### Changed
 - **Dual licence**: AGPL-3.0-only **or** a commercial licence from the copyright holder (`LICENSING.md`, `LICENSES/`,
