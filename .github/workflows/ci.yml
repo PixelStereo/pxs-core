@@ -79,6 +79,35 @@ jobs:
           echo "$symbols" | grep -v '^pxs_' | grep -v '^$' && { echo "exports more than pxs_*"; exit 1; } || true
           test "$(echo "$symbols" | grep -c '^pxs_')" -eq "$(grep -c '^PXS_API' include/pxs/c/pxs.h)"
 
+  # The Dart package, against the real shared library; and its generated bindings must match the header.
+  dart:
+    name: Dart package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with: { sdk: stable }
+      - run: cmake -S . -B build-shared -DCMAKE_BUILD_TYPE=Release -DPXS_CORE_BUILD_SHARED_C=ON -DPXS_CORE_BUILD_TESTS=OFF
+      - run: cmake --build build-shared --target pxs_c --parallel
+      - working-directory: dart
+        run: dart pub get
+      - working-directory: dart
+        run: dart analyze --fatal-infos
+      - working-directory: dart
+        run: dart test
+        env: { PXS_C_LIBRARY: "${{ github.workspace }}/build-shared/${{ runner.os == 'macOS' && 'libpxs_c.dylib' || 'libpxs_c.so' }}" }
+      - name: The generated bindings are the header's
+        if: runner.os == 'Linux'
+        working-directory: dart
+        run: |
+          sudo apt-get install -y libclang-dev > /dev/null
+          dart run ffigen --config ffigen.yaml
+          git diff --exit-code lib/src/bindings.g.dart
+
   sanitizers:
     name: Sanitizers (ASan, UBSan)
     runs-on: ubuntu-latest

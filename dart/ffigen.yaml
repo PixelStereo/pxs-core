@@ -1,0 +1,32 @@
+# Dart bindings for the C interface:  dart run ffigen --config ffigen.yaml   (from this directory; needs LLVM's libclang)
+name: PxsBindings
+description: Bindings to pxs-core's C interface (include/pxs/c/pxs.h)
+output: 'lib/src/bindings.g.dart'
+headers:
+  entry-points:
+    - '../include/pxs/c/pxs.h'
+  include-directives:
+    - '../include/pxs/c/pxs.h'
+functions:
+  include:
+    - 'pxs_.*'
+structs:
+  include:
+    - 'pxs_.*'
+enums:
+  include:
+    - 'pxs_.*'
+preamble: |
+  // Generated from pxs-core's include/pxs/c/pxs.h by ffigen. Do not edit.
+  // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-PixelStereo-Commercial
+  // ignore_for_file: type=lint
+comments:
+  style: any
+  length: full
+llvm-path:
+  - '/opt/homebrew/opt/llvm'
+  - '/usr/lib/llvm-18'
+  - '/usr/lib/llvm-17'
+  - '/usr/lib/llvm-16'
+  - '/usr/lib/llvm-15'
+  - '/usr/lib/llvm-14'
