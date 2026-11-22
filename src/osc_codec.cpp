@@ -1,65 +1,86 @@
 #include <pxs/core/osc/codec.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 
 namespace pxs::core::osc {
 namespace {
 
-constexpr std::size_t kMaxPacket = 1u << 20;
-constexpr std::size_t kMaxArgs = 1024;
-constexpr int kMaxDepth = 8;
-constexpr std::size_t kMaxMessages = 1024;
+// ---------------------------------------------------------------------------------------------------------------------
+// Encoding
+// ---------------------------------------------------------------------------------------------------------------------
 
-void pad(Bytes &bytes)
+// Zero bytes up to a multiple of 4 counted from `base`, where the message being written starts (an `out` that already
+// holds something is appended to, and the alignment is the message's, not the buffer's).
+void pad(Bytes &bytes, std::size_t base)
 {
-    while (bytes.size() % 4) bytes.push_back(0);
+    while ((bytes.size() - base) % 4 != 0) bytes.push_back(0);
 }
 
-void putString(Bytes &bytes, const std::string &value)
+void putString(Bytes &bytes, std::size_t base, std::string_view value)
 {
     bytes.insert(bytes.end(), value.begin(), value.end());
     bytes.push_back(0);
-    pad(bytes);
+    pad(bytes, base);
 }
 
 template <typename T> void putBE(Bytes &bytes, T value)
 {
     using U = std::make_unsigned_t<T>;
-    U bits{};
-    std::memcpy(&bits, &value, sizeof(T));
+    const U bits = static_cast<U>(value);
     for (int shift = int(sizeof(T) * 8) - 8; shift >= 0; shift -= 8)
-        bytes.push_back(std::uint8_t((bits >> shift) & U(0xff)));
+        bytes.push_back(static_cast<std::uint8_t>((bits >> shift) & U(0xff)));
 }
 
+template <typename Bits, typename Real> Bits bitsOf(Real value)
+{
+    static_assert(sizeof(Bits) == sizeof(Real));
+    Bits bits{};
+    std::memcpy(&bits, &value, sizeof(Real));
+    return bits;
+}
+
+template <typename Real, typename Bits> Real realOf(Bits bits)
+{
+    static_assert(sizeof(Bits) == sizeof(Real));
+    Real value{};
+    std::memcpy(&value, &bits, sizeof(Real));
+    return value;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Decoding
+// ---------------------------------------------------------------------------------------------------------------------
+
+// A bounded cursor over a packet from the network: no check may overflow, so the room left is compared, never pos + n.
 struct Reader {
-    const Bytes &bytes;
+    const std::uint8_t *data;
+    std::size_t size;
     std::size_t pos = 0;
     bool ok = true;
 
-    std::size_t left() const { return pos <= bytes.size() ? bytes.size() - pos : 0; }
     bool need(std::size_t n)
     {
-        if (pos > bytes.size() || n > bytes.size() - pos) ok = false;
+        if (pos > size || n > size - pos) ok = false;
         return ok;
     }
-    void align4() { pos = std::min<std::size_t>((pos + 3) & ~std::size_t(3), bytes.size()); }
+    void align4() { pos = std::min(size, (pos + 3) & ~std::size_t(3)); }
     std::string string()
     {
-        if (pos >= bytes.size()) {
+        if (pos >= size) {
             ok = false;
             return {};
         }
-        const auto begin = bytes.begin() + std::ptrdiff_t(pos);
-        const auto end = std::find(begin, bytes.end(), std::uint8_t(0));
-        if (end == bytes.end()) {
+        const auto *begin = data + pos;
+        const auto *end = static_cast<const std::uint8_t *>(std::memchr(begin, 0, size - pos));
+        if (!end) {
             ok = false;
             return {};
         }
-        std::string value(begin, end);
-        pos = std::size_t(end - bytes.begin()) + 1;
+        std::string value(reinterpret_cast<const char *>(begin), std::size_t(end - begin));
+        pos += std::size_t(end - begin) + 1;
         align4();
         return value;
     }
@@ -68,122 +89,115 @@ struct Reader {
         if (!need(sizeof(T))) return T{};
         using U = std::make_unsigned_t<T>;
         U bits = 0;
-        for (std::size_t i = 0; i < sizeof(T); ++i) bits = U((bits << 8) | bytes[pos++]);
-        T value{};
-        std::memcpy(&value, &bits, sizeof(T));
-        return value;
+        for (std::size_t i = 0; i < sizeof(T); ++i) bits = U((bits << 8) | data[pos++]);
+        return static_cast<T>(bits);
     }
 };
 
-bool decodeInto(const Bytes &packet, std::vector<Message> &out, int depth)
+bool decodeMessage(const std::uint8_t *data, std::size_t size, std::vector<Message> &out)
 {
-    if (packet.empty() || packet.size() > kMaxPacket || depth > kMaxDepth) return false;
-    if (packet.size() >= 8 && std::equal(packet.begin(), packet.begin() + 8, "#bundle\0")) {
-        if (packet.size() < 16) return false;
-        Reader reader{packet};
-        reader.pos = 16;
-        while (reader.ok && reader.pos < packet.size()) {
-            const auto size = reader.be<std::int32_t>();
-            if (!reader.ok || size <= 0 || !reader.need(std::size_t(size))) return false;
-            const auto first = packet.begin() + std::ptrdiff_t(reader.pos);
-            Bytes child(first, first + size);
-            if (!decodeInto(child, out, depth + 1)) return false;
-            reader.pos += std::size_t(size);
-        }
-        return reader.ok;
-    }
-    if (packet.front() != '/') return false;
-
-    Reader reader{packet};
+    Reader reader{data, size};
     Message message;
     message.address = reader.string();
     if (!reader.ok) return false;
-    if (reader.pos < packet.size() && packet[reader.pos] == ',') {
+    if (reader.pos < size && data[reader.pos] == ',') {
         const std::string tags = reader.string();
-        if (!reader.ok || tags.empty() || tags.size() - 1 > kMaxArgs) return false;
+        if (!reader.ok || tags.size() - 1 > kMaxArguments) return false;
         message.types = tags.substr(1);
         message.args.reserve(message.types.size());
         for (const char tag : message.types) {
             switch (tag) {
             case 'i': message.args.emplace_back(reader.be<std::int32_t>()); break;
-            case 'h': message.args.emplace_back(reader.be<std::int64_t>()); break;
-            case 'f': {
-                const auto bits = reader.be<std::uint32_t>();
-                float value{};
-                std::memcpy(&value, &bits, sizeof(value));
-                message.args.emplace_back(value);
-                break;
-            }
-            case 'd': {
-                const auto bits = reader.be<std::uint64_t>();
-                double value{};
-                std::memcpy(&value, &bits, sizeof(value));
-                message.args.emplace_back(value);
-                break;
-            }
+            case 'h':
+            case 't': message.args.emplace_back(reader.be<std::int64_t>()); break;
+            case 'f': message.args.emplace_back(realOf<float>(reader.be<std::uint32_t>())); break;
+            case 'd': message.args.emplace_back(realOf<double>(reader.be<std::uint64_t>())); break;
             case 's':
             case 'S': message.args.emplace_back(reader.string()); break;
             case 'b': {
-                const auto size = reader.be<std::int32_t>();
-                if (!reader.ok || size < 0 || !reader.need(std::size_t(size))) return false;
-                const auto begin = packet.begin() + std::ptrdiff_t(reader.pos);
-                message.args.emplace_back(Blob(begin, begin + size));
-                reader.pos += std::size_t(size);
+                const auto length = reader.be<std::int32_t>();
+                if (!reader.ok || length < 0 || !reader.need(std::size_t(length))) return false;
+                const auto *begin = data + reader.pos;
+                message.args.emplace_back(Blob(begin, begin + length));
+                reader.pos += std::size_t(length);
                 reader.align4();
                 break;
             }
-            case 'c': message.args.emplace_back(reader.be<std::uint32_t>()); break;
+            case 'c':
             case 'r':
             case 'm': message.args.emplace_back(reader.be<std::uint32_t>()); break;
-            case 't': message.args.emplace_back(reader.be<std::int64_t>()); break;
             case 'T': message.args.emplace_back(true); break;
             case 'F': message.args.emplace_back(false); break;
-            default: message.args.emplace_back(std::monostate{}); break;
+            default: message.args.emplace_back(std::monostate{}); break; // N, I, arrays, unknown: no data
             }
             if (!reader.ok) return false;
         }
     }
-    if (out.size() >= kMaxMessages) return false;
     out.push_back(std::move(message));
     return true;
 }
 
-constexpr std::size_t kMaxPatternChars = 8192;
-constexpr std::size_t kMaxSegmentChars = 4096;
+// `limit`: the size `out` may not grow beyond (the messages of this packet are counted, not those already in `out`).
+bool decodeInto(const std::uint8_t *data, std::size_t size, std::vector<Message> &out, int depth, std::size_t limit)
+{
+    if (size == 0 || depth > kMaxBundleDepth) return false;
+    if (size >= 8 && std::memcmp(data, "#bundle", 8) == 0) { // "#bundle" and its NUL
+        if (size < 16) return false;
+        Reader reader{data, size};
+        reader.pos = 16; // after the time tag
+        while (reader.ok && reader.pos < size) {
+            const auto length = reader.be<std::int32_t>();
+            if (!reader.ok || length <= 0 || !reader.need(std::size_t(length))) return false;
+            if (!decodeInto(data + reader.pos, std::size_t(length), out, depth + 1, limit)) return false;
+            reader.pos += std::size_t(length);
+        }
+        return reader.ok;
+    }
+    if (data[0] != '/') return false;
+    if (out.size() >= limit) return false;
+    return decodeMessage(data, size, out);
+}
 
-std::u32string codepoints(const std::string &text)
+// ---------------------------------------------------------------------------------------------------------------------
+// Address patterns
+// ---------------------------------------------------------------------------------------------------------------------
+
+// A byte that is not valid UTF-8 becomes U+DC00 + byte (the "surrogate escape"): a code point valid UTF-8 can never
+// produce, so two different invalid bytes stay different, and neither equals a valid character.
+constexpr char32_t kEscapeBase = 0xDC00;
+
+bool isCont(std::uint8_t byte) { return (byte & 0xC0) == 0x80; }
+
+std::u32string codePoints(std::string_view text)
 {
     std::u32string out;
+    out.reserve(text.size());
+    const auto at = [&](std::size_t i) { return static_cast<std::uint8_t>(text[i]); };
     for (std::size_t i = 0; i < text.size();) {
-        const auto lead = static_cast<unsigned char>(text[i]);
+        const std::uint8_t lead = at(i);
+        std::size_t length = 0;
+        char32_t value = 0;
         if (lead < 0x80) {
-            out.push_back(char32_t(lead));
+            length = 1;
+            value = lead;
+        } else if (lead >= 0xC2 && lead <= 0xDF && i + 1 < text.size() && isCont(at(i + 1))) {
+            length = 2;
+            value = (char32_t(lead & 0x1F) << 6) | (at(i + 1) & 0x3F);
+        } else if (lead >= 0xE0 && lead <= 0xEF && i + 2 < text.size() && isCont(at(i + 1)) && isCont(at(i + 2))) {
+            value = (char32_t(lead & 0x0F) << 12) | (char32_t(at(i + 1) & 0x3F) << 6) | (at(i + 2) & 0x3F);
+            if (value >= 0x800 && !(value >= 0xD800 && value <= 0xDFFF)) length = 3; // no overlong, no surrogate
+        } else if (lead >= 0xF0 && lead <= 0xF4 && i + 3 < text.size() && isCont(at(i + 1)) && isCont(at(i + 2)) &&
+                   isCont(at(i + 3))) {
+            value = (char32_t(lead & 0x07) << 18) | (char32_t(at(i + 1) & 0x3F) << 12) |
+                    (char32_t(at(i + 2) & 0x3F) << 6) | (at(i + 3) & 0x3F);
+            if (value >= 0x10000 && value <= 0x10FFFF) length = 4; // no overlong, nothing past Unicode
+        }
+        if (length == 0) { // invalid: this byte alone is escaped, the next one is looked at afresh
+            out.push_back(kEscapeBase + lead);
             ++i;
-            continue;
-        }
-        int count = lead >= 0xf0 ? 4 : lead >= 0xe0 ? 3 : lead >= 0xc2 ? 2 : 0;
-        char32_t value = count == 2 ? char32_t(lead & 0x1f) : count == 3 ? char32_t(lead & 0x0f) : char32_t(lead & 0x07);
-        bool valid = count != 0 && i + std::size_t(count) <= text.size();
-        for (int j = 1; valid && j < count; ++j) {
-            const auto next = static_cast<unsigned char>(text[i + std::size_t(j)]);
-            if ((next & 0xc0) != 0x80) valid = false;
-            else value = (value << 6) | char32_t(next & 0x3f);
-        }
-        if (valid && ((count == 2 && value < 0x80) || (count == 3 && value < 0x800) ||
-                      (count == 4 && value < 0x10000) || value > 0x10ffff ||
-                      (value >= 0xd800 && value <= 0xdfff))) valid = false;
-        if (valid) {
-            if (value > 0xffff) {
-                value -= 0x10000;
-                out.push_back(0xd800 + (value >> 10));
-                out.push_back(0xdc00 + (value & 0x3ff));
-            } else {
-                out.push_back(value);
-            }
-            i += std::size_t(count);
         } else {
-            out.push_back(0xfffd);
-            ++i;
+            out.push_back(value);
+            i += length;
         }
     }
     return out;
@@ -205,9 +219,9 @@ std::vector<std::u32string> splitPath(const std::u32string &path)
 struct PatternToken {
     enum class Kind { Char, Any, Star, Set, Alt } kind = Kind::Char;
     char32_t character = 0;
-    std::u32string set;
+    std::u32string set; // Set: its characters and ranges (a-z), without the '!'
     bool negate = false;
-    std::vector<std::u32string> alternatives;
+    std::vector<std::u32string> alternatives; // Alt: literal alternatives
 };
 
 bool inSet(const PatternToken &token, char32_t character)
@@ -215,22 +229,23 @@ bool inSet(const PatternToken &token, char32_t character)
     bool found = false;
     for (std::size_t i = 0; i < token.set.size(); ++i) {
         if (i + 2 < token.set.size() && token.set[i + 1] == U'-') {
-            found |= character >= token.set[i] && character <= token.set[i + 2];
+            found = found || (character >= token.set[i] && character <= token.set[i + 2]);
             i += 2;
         } else {
-            found |= character == token.set[i];
+            found = found || character == token.set[i];
         }
     }
     return found != token.negate;
 }
 
+// false: malformed ('[' or '{' never closed), which matches nothing
 bool tokenize(const std::u32string &pattern, std::vector<PatternToken> &out)
 {
     for (std::size_t i = 0; i < pattern.size(); ++i) {
         const char32_t c = pattern[i];
         PatternToken token;
         if (c == U'*') {
-            if (!out.empty() && out.back().kind == PatternToken::Kind::Star) continue;
+            if (!out.empty() && out.back().kind == PatternToken::Kind::Star) continue; // "**" is "*"
             token.kind = PatternToken::Kind::Star;
         } else if (c == U'?') {
             token.kind = PatternToken::Kind::Any;
@@ -263,22 +278,24 @@ bool tokenize(const std::u32string &pattern, std::vector<PatternToken> &out)
     return true;
 }
 
+// One part: the positions of the address that the pattern can have reached are carried from one token to the next (two
+// rows), so the time is O(pattern x address) whatever the pattern; a backtracking matcher is exponential on "/**…*a".
 bool matchSegment(const std::u32string &pattern, const std::u32string &address)
 {
-    if (pattern.find_first_of(U"*?[{") == std::u32string::npos) return pattern == address;
+    if (pattern.find_first_of(U"*?[{") == std::u32string::npos) return pattern == address; // the usual case
     std::vector<PatternToken> tokens;
     if (!tokenize(pattern, tokens)) return false;
     const std::size_t n = address.size();
     std::vector<unsigned char> at(n + 1, 0), next(n + 1, 0);
     at[0] = 1;
     for (const auto &token : tokens) {
-        std::fill(next.begin(), next.end(), 0);
+        std::fill(next.begin(), next.end(), static_cast<unsigned char>(0));
         bool any = false;
-        if (token.kind == PatternToken::Kind::Star) {
+        if (token.kind == PatternToken::Kind::Star) { // from the first position reached, every one after it
             bool on = false;
             for (std::size_t i = 0; i <= n; ++i) {
-                on = on || at[i];
-                next[i] = on;
+                on = on || at[i] != 0;
+                next[i] = on ? 1 : 0;
                 any = any || on;
             }
         } else {
@@ -286,23 +303,22 @@ bool matchSegment(const std::u32string &pattern, const std::u32string &address)
                 if (!at[i]) continue;
                 switch (token.kind) {
                 case PatternToken::Kind::Char:
-                    if (i < n && address[i] == token.character) next[i + 1] = any = true;
+                    if (i < n && address[i] == token.character) next[i + 1] = 1, any = true;
                     break;
                 case PatternToken::Kind::Any:
-                    if (i < n) next[i + 1] = any = true;
+                    if (i < n) next[i + 1] = 1, any = true;
                     break;
                 case PatternToken::Kind::Set:
-                    if (i < n && inSet(token, address[i])) next[i + 1] = any = true;
+                    if (i < n && inSet(token, address[i])) next[i + 1] = 1, any = true;
                     break;
                 case PatternToken::Kind::Alt:
                     for (const auto &alternative : token.alternatives) {
                         if (alternative.size() <= n - i &&
                             std::equal(alternative.begin(), alternative.end(), address.begin() + std::ptrdiff_t(i)))
-                            next[i + alternative.size()] = any = true;
+                            next[i + alternative.size()] = 1, any = true;
                     }
                     break;
-                case PatternToken::Kind::Star:
-                    break;
+                case PatternToken::Kind::Star: break;
                 }
             }
         }
@@ -314,88 +330,96 @@ bool matchSegment(const std::u32string &pattern, const std::u32string &address)
 
 } // namespace
 
-Bytes encode(const Message &message)
+void encode(const Message &message, Bytes &out)
 {
-    Bytes bytes;
-    putString(bytes, message.address);
-    putString(bytes, "," + message.types);
+    const std::size_t base = out.size();
+    putString(out, base, message.address);
+    out.push_back(',');
+    out.insert(out.end(), message.types.begin(), message.types.end());
+    out.push_back(0);
+    pad(out, base);
     for (std::size_t i = 0; i < message.types.size(); ++i) {
-        const Value value = i < message.args.size() ? message.args[i] : Value{};
+        static const Value none;
+        const Value &value = i < message.args.size() ? message.args[i] : none;
         switch (message.types[i]) {
         case 'i': {
-            const auto v = std::get_if<std::int32_t>(&value);
-            putBE(bytes, v ? *v : std::int32_t(0));
+            const auto *v = std::get_if<std::int32_t>(&value);
+            putBE(out, v ? *v : std::int32_t(0));
             break;
         }
         case 'h':
         case 't': {
-            const auto v = std::get_if<std::int64_t>(&value);
-            putBE(bytes, v ? *v : std::int64_t(0));
+            const auto *v = std::get_if<std::int64_t>(&value);
+            putBE(out, v ? *v : std::int64_t(0));
             break;
         }
         case 'f': {
-            const auto v = std::get_if<float>(&value);
-            const float f = v ? *v : 0.f;
-            std::uint32_t bits{};
-            std::memcpy(&bits, &f, sizeof(f));
-            putBE(bytes, bits);
+            const auto *v = std::get_if<float>(&value);
+            putBE(out, bitsOf<std::uint32_t>(v ? *v : 0.0f));
             break;
         }
         case 'd': {
-            const auto v = std::get_if<double>(&value);
-            const double d = v ? *v : 0.0;
-            std::uint64_t bits{};
-            std::memcpy(&bits, &d, sizeof(d));
-            putBE(bytes, bits);
+            const auto *v = std::get_if<double>(&value);
+            putBE(out, bitsOf<std::uint64_t>(v ? *v : 0.0));
             break;
         }
         case 's':
         case 'S': {
-            const auto v = std::get_if<std::string>(&value);
-            putString(bytes, v ? *v : std::string{});
+            const auto *v = std::get_if<std::string>(&value);
+            putString(out, base, v ? std::string_view(*v) : std::string_view());
             break;
         }
         case 'b': {
-            const auto v = std::get_if<Blob>(&value);
-            const Blob empty;
-            const Blob &blob = v ? *v : empty;
-            putBE(bytes, std::int32_t(blob.size()));
-            bytes.insert(bytes.end(), blob.begin(), blob.end());
-            pad(bytes);
+            const auto *v = std::get_if<Blob>(&value);
+            const std::size_t length =
+                v ? std::min<std::size_t>(v->size(), std::numeric_limits<std::int32_t>::max()) : 0;
+            putBE(out, static_cast<std::int32_t>(length));
+            if (v) out.insert(out.end(), v->begin(), v->begin() + std::ptrdiff_t(length));
+            pad(out, base);
             break;
         }
         case 'c':
         case 'r':
         case 'm': {
-            const auto v = std::get_if<std::uint32_t>(&value);
-            putBE(bytes, v ? *v : std::uint32_t(0));
+            const auto *v = std::get_if<std::uint32_t>(&value);
+            putBE(out, v ? *v : std::uint32_t(0));
             break;
         }
-        case 'T':
-        case 'F':
-        case 'N':
-        case 'I':
-            break;
-        default:
-            break;
+        default: break; // T F N I and the tags this library does not know: no data
         }
     }
+}
+
+Bytes encode(const Message &message)
+{
+    Bytes bytes;
+    encode(message, bytes);
     return bytes;
 }
 
-bool decode(const Bytes &packet, std::vector<Message> &out) { return decodeInto(packet, out, 0); }
-
-bool match(const std::string &patternUtf8, const std::string &addressUtf8)
+bool decode(const std::uint8_t *data, std::size_t size, std::vector<Message> &out)
 {
-    const auto pattern = codepoints(patternUtf8);
-    const auto address = codepoints(addressUtf8);
+    if (!data || size == 0 || size > kMaxPacketBytes) return false;
+    const std::size_t before = out.size();
+    const bool ok = decodeInto(data, size, out, 0, before + kMaxMessagesPerPacket);
+    if (!ok) out.resize(before); // all or nothing
+    return ok;
+}
+
+bool decode(const Bytes &packet, std::vector<Message> &out) { return decode(packet.data(), packet.size(), out); }
+
+bool match(std::string_view patternUtf8, std::string_view addressUtf8)
+{
+    const auto pattern = codePoints(patternUtf8);
+    const auto address = codePoints(addressUtf8);
     if (pattern.size() > kMaxPatternChars || address.size() > kMaxPatternChars) return false;
     const auto patternParts = splitPath(pattern);
     const auto addressParts = splitPath(address);
     if (patternParts.size() != addressParts.size()) return false;
     for (std::size_t i = 0; i < patternParts.size(); ++i) {
         if (patternParts[i].size() > kMaxSegmentChars || addressParts[i].size() > kMaxSegmentChars ||
-            !matchSegment(patternParts[i], addressParts[i])) return false;
+            !matchSegment(patternParts[i], addressParts[i]))
+            return false;
     }
     return true;
 }

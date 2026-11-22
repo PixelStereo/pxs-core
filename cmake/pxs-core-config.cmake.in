@@ -1,0 +1,3 @@
+@PACKAGE_INIT@
+include("${CMAKE_CURRENT_LIST_DIR}/pxs-core-targets.cmake")
+check_required_components(pxs-core)
