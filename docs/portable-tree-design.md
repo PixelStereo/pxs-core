@@ -19,7 +19,9 @@ implementation. The Qt applications keep working, and Qt stays the layer that ad
 | `oscquery/*` | 800 + 323 (mDNS) | QtNetwork sockets, `QJsonObject`, `QObject` |
 | `ChangeFeed` | 56 | `QString` (a portable one exists since 0.3.0) |
 
-Applications are the constraint: NyxMap alone has ~490 places that read or write a value, and nodes are filled in by hand.
+Applications are the constraint, but only one of them really: measured on the seven repositories, NyxMap has 431 mentions of
+`Parameter`/`ParamInfo` in 36 files and 166 assignments to `Node` members; Kadran has 16 and 32; AtemRemoteOSC 5 assignments;
+MpOsc, ISFLab and Cold-Flame next to nothing; DMXPulse none.
 
 ## Design
 
@@ -59,29 +61,33 @@ fuzzers apply to every new parser (an HTTP parser is new attack surface).
 foreign thread into Dart), ownership written per function. Generated Dart bindings with `ffigen`. Versioned separately:
 it is the hardest surface to change once published. Only codecs, values, tree and OSCQuery pure parts are exposed.
 
-## The one hard problem: `Node`'s public data members
-Applications assign `node.type`, `node.get`, `node.set`, `node.range`… With a portable core those become accessors. Three
-ways, **decision needed**:
+## The one hard problem: `Node`'s public data members — decided: B
+Applications assign `node.type`, `node.get`, `node.set`, `node.range`… With a portable core those become accessors, so
+the API changes. Options that were weighed: **A** a source-compatible shim (a Qt tree that mirrors a core tree: two
+structures to keep in step, for a transition), **B** a clean break, **C** two trees (rejected: the duplication the split was
+meant to end). **B is retained**, in a form that costs less than it sounds:
 
-- **A — Source-compatible shim** (recommended first step): keep Qt `Node` with its public members as today, and make the
-  Qt `Tree` *own* a core tree that it keeps in sync through the same entry points (`add`, `addAction`, `Parameter`). Apps do
-  not change; a thin mirror costs memory and a conversion on writes. Then migrate the apps module by module and remove the
-  shim: each step is a small PR the CI can judge.
-- **B — Break once, in lockstep**: Qt `Node` becomes a façade with accessors; the seven apps change in the same release
-  window. Cleanest end state, a large coordinated change (NyxMap dominates).
-- **C — Two trees**: leave the Qt tree and write a new portable one. No migration, but two implementations that must be kept
-  identical: this is exactly what the pxs-core split was meant to avoid. Not recommended.
+- **No lockstep release.** Applications pin pxs-qt by commit. The break lands on pxs-qt `main` without touching any
+  application; each one moves to the new pxs-qt when its own PR is ready and green. NyxMap, the one with the real work and a
+  rework planned anyway, moves last.
+- **No Qt façade either.** The end state is that applications use `pxs::core::tree` and `pxs::core::Value` directly, and
+  pxs-qt keeps only what is Qt: converters (`QVariant` ⇄ `Value`, `QJsonValue` ⇄ `json`), signals, widgets, QtNetwork transport.
+  Less Qt code to maintain than a façade would be.
+- **Same first steps as A.** The portable `Value`, `Parameter` and `Tree`, tested against the current Qt tree by the
+  differential harness, are needed whichever option is chosen; only the last step differs.
 
 ## Order of work
 1. Value + conversions + golden vectors (pxs-core 0.4).
 2. Parameter and Tree in core, with the differential harness against the Qt tree (0.5); Qt adapter, shim (A).
 3. Presets and JSON (nlohmann) (0.6).
 4. OSCQuery pure parts, HTTP parser, mDNS packets (0.7), each with a fuzzer.
-5. Migrate the apps off the shim, one PR per app; then `pxs-c` and the Flutter binding.
+5. pxs-qt drops its own `Tree`/`Parameter` for converters over the core ones (the break, on `main`, no application affected).
+6. Each application moves to it in its own PR, smallest first (DMXPulse, Cold-Flame, MpOsc, ISFLab, AtemRemoteOSC, Kadran),
+   NyxMap last, as part of its rework; then `pxs-c` and the Flutter binding.
 
 Each step is a pxs-core tag and a pxs-qt PR; none leaves a repository in a state its CI cannot judge.
 
 ## Decisions needed
-1. **A, B or C** for the public `Node` members (recommended: A, then migrate).
+1. ~~A, B or C~~ — B, see above (the maintainer's proposal; to confirm on this PR).
 2. **Value set**: is `Vec2/Vec3/Vec4/Blob/List` right, or is anything missing (a `Color` of its own? integer vectors?).
 3. **Mobile networking**: confirm sockets stay out of the core (Qt: QtNetwork, Flutter: `dart:io`).
