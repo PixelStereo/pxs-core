@@ -2,6 +2,7 @@
 // DMX over the network: the frames of Art-Net (DMX data, OpDmx) and sACN (ANSI E1.31), encoded and decoded, with no
 // dependency beyond the C++17 standard library. The sockets, the merging of sources and what a channel drives are the
 // application's.
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>

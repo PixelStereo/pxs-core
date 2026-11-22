@@ -3,6 +3,8 @@
 #include "check.h"
 #include "golden.h"
 
+#include <algorithm>
+
 using namespace pxs::core::osc;
 
 namespace {
