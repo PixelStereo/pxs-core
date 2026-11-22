@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+
+permissions: { contents: read }
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # pxs-core has no Qt: these runners have none installed, which is what proves it.
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux GCC, os: ubuntu-latest, cxx: g++ }
+          - { name: Linux Clang, os: ubuntu-latest, cxx: clang++ }
+          - { name: macOS, os: macos-latest, cxx: "" }
+          - { name: Windows MSVC, os: windows-latest, cxx: "" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        shell: bash
+        run: |
+          args=(-DCMAKE_BUILD_TYPE=Release -DPXS_CORE_WARNINGS_AS_ERRORS=ON)
+          [ -n "${{ matrix.cxx }}" ] && args+=(-DCMAKE_CXX_COMPILER=${{ matrix.cxx }})
+          cmake -S . -B build "${args[@]}"
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+      - name: No Qt anywhere
+        shell: bash
+        run: |
+          ! grep -R -E '#include *[<"]Q|Qt[0-9]' include src CMakeLists.txt
+      - name: Install and use as a package
+        shell: bash
+        run: |
+          cmake --install build --config Release --prefix "$PWD/prefix"
+          cmake -S test/package -B build-package -DCMAKE_PREFIX_PATH="$PWD/prefix" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-package --config Release
+          ctest --test-dir build-package --build-config Release --output-on-failure
+
+  sanitizers:
+    name: Sanitizers (ASan, UBSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang++ -DPXS_CORE_SANITIZE=ON -DPXS_CORE_WARNINGS_AS_ERRORS=ON
+      - run: cmake --build build --parallel
+      - run: ctest --test-dir build --output-on-failure
+        env: { PXS_ROBUSTNESS_ITERATIONS: "400000" }
+
+  fuzz:
+    name: Fuzz (60 s each)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DPXS_CORE_BUILD_FUZZERS=ON -DPXS_CORE_BUILD_TESTS=OFF
+      - run: cmake --build build --parallel
+      - name: Run
+        run: |
+          for t in osc dmx websocket; do
+            mkdir -p "work/$t"
+            ./build/fuzz/fuzz_$t -max_total_time=60 -timeout=5 "work/$t" fuzz/corpus/$t
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: fuzz-crashes, path: "crash-*\nleak-*\ntimeout-*", if-no-files-found: ignore }
