@@ -205,3 +205,597 @@ wsdec	81	1000	0	-1		0
 wsdec	818537	1000	0	-1		0
 wsdec	818537fa213d7f9f4d51	1000	0	-1		0
 wsdec	818337fa213d589444818337fa213d438d4e	1000	1	1	6f6e65	9
+midibuild	0	-3	0	0	b00000
+midibuild	0	-3	0	0.5	b00040
+midibuild	0	-3	0	1	b0007f
+midibuild	0	-3	0	5	b0007f
+midibuild	0	-3	7	0	b00700
+midibuild	0	-3	7	0.5	b00740
+midibuild	0	-3	7	1	b0077f
+midibuild	0	-3	7	5	b0077f
+midibuild	0	-3	127	0	b07f00
+midibuild	0	-3	127	0.5	b07f40
+midibuild	0	-3	127	1	b07f7f
+midibuild	0	-3	127	5	b07f7f
+midibuild	0	-3	300	0	b07f00
+midibuild	0	-3	300	0.5	b07f40
+midibuild	0	-3	300	1	b07f7f
+midibuild	0	-3	300	5	b07f7f
+midibuild	0	0	0	0	b00000
+midibuild	0	0	0	0.5	b00040
+midibuild	0	0	0	1	b0007f
+midibuild	0	0	0	5	b0007f
+midibuild	0	0	7	0	b00700
+midibuild	0	0	7	0.5	b00740
+midibuild	0	0	7	1	b0077f
+midibuild	0	0	7	5	b0077f
+midibuild	0	0	127	0	b07f00
+midibuild	0	0	127	0.5	b07f40
+midibuild	0	0	127	1	b07f7f
+midibuild	0	0	127	5	b07f7f
+midibuild	0	0	300	0	b07f00
+midibuild	0	0	300	0.5	b07f40
+midibuild	0	0	300	1	b07f7f
+midibuild	0	0	300	5	b07f7f
+midibuild	0	1	0	0	b00000
+midibuild	0	1	0	0.5	b00040
+midibuild	0	1	0	1	b0007f
+midibuild	0	1	0	5	b0007f
+midibuild	0	1	7	0	b00700
+midibuild	0	1	7	0.5	b00740
+midibuild	0	1	7	1	b0077f
+midibuild	0	1	7	5	b0077f
+midibuild	0	1	127	0	b07f00
+midibuild	0	1	127	0.5	b07f40
+midibuild	0	1	127	1	b07f7f
+midibuild	0	1	127	5	b07f7f
+midibuild	0	1	300	0	b07f00
+midibuild	0	1	300	0.5	b07f40
+midibuild	0	1	300	1	b07f7f
+midibuild	0	1	300	5	b07f7f
+midibuild	0	2	0	0	b10000
+midibuild	0	2	0	0.5	b10040
+midibuild	0	2	0	1	b1007f
+midibuild	0	2	0	5	b1007f
+midibuild	0	2	7	0	b10700
+midibuild	0	2	7	0.5	b10740
+midibuild	0	2	7	1	b1077f
+midibuild	0	2	7	5	b1077f
+midibuild	0	2	127	0	b17f00
+midibuild	0	2	127	0.5	b17f40
+midibuild	0	2	127	1	b17f7f
+midibuild	0	2	127	5	b17f7f
+midibuild	0	2	300	0	b17f00
+midibuild	0	2	300	0.5	b17f40
+midibuild	0	2	300	1	b17f7f
+midibuild	0	2	300	5	b17f7f
+midibuild	0	9	0	0	b80000
+midibuild	0	9	0	0.5	b80040
+midibuild	0	9	0	1	b8007f
+midibuild	0	9	0	5	b8007f
+midibuild	0	9	7	0	b80700
+midibuild	0	9	7	0.5	b80740
+midibuild	0	9	7	1	b8077f
+midibuild	0	9	7	5	b8077f
+midibuild	0	9	127	0	b87f00
+midibuild	0	9	127	0.5	b87f40
+midibuild	0	9	127	1	b87f7f
+midibuild	0	9	127	5	b87f7f
+midibuild	0	9	300	0	b87f00
+midibuild	0	9	300	0.5	b87f40
+midibuild	0	9	300	1	b87f7f
+midibuild	0	9	300	5	b87f7f
+midibuild	0	16	0	0	bf0000
+midibuild	0	16	0	0.5	bf0040
+midibuild	0	16	0	1	bf007f
+midibuild	0	16	0	5	bf007f
+midibuild	0	16	7	0	bf0700
+midibuild	0	16	7	0.5	bf0740
+midibuild	0	16	7	1	bf077f
+midibuild	0	16	7	5	bf077f
+midibuild	0	16	127	0	bf7f00
+midibuild	0	16	127	0.5	bf7f40
+midibuild	0	16	127	1	bf7f7f
+midibuild	0	16	127	5	bf7f7f
+midibuild	0	16	300	0	bf7f00
+midibuild	0	16	300	0.5	bf7f40
+midibuild	0	16	300	1	bf7f7f
+midibuild	0	16	300	5	bf7f7f
+midibuild	0	17	0	0	bf0000
+midibuild	0	17	0	0.5	bf0040
+midibuild	0	17	0	1	bf007f
+midibuild	0	17	0	5	bf007f
+midibuild	0	17	7	0	bf0700
+midibuild	0	17	7	0.5	bf0740
+midibuild	0	17	7	1	bf077f
+midibuild	0	17	7	5	bf077f
+midibuild	0	17	127	0	bf7f00
+midibuild	0	17	127	0.5	bf7f40
+midibuild	0	17	127	1	bf7f7f
+midibuild	0	17	127	5	bf7f7f
+midibuild	0	17	300	0	bf7f00
+midibuild	0	17	300	0.5	bf7f40
+midibuild	0	17	300	1	bf7f7f
+midibuild	0	17	300	5	bf7f7f
+midibuild	0	99	0	0	bf0000
+midibuild	0	99	0	0.5	bf0040
+midibuild	0	99	0	1	bf007f
+midibuild	0	99	0	5	bf007f
+midibuild	0	99	7	0	bf0700
+midibuild	0	99	7	0.5	bf0740
+midibuild	0	99	7	1	bf077f
+midibuild	0	99	7	5	bf077f
+midibuild	0	99	127	0	bf7f00
+midibuild	0	99	127	0.5	bf7f40
+midibuild	0	99	127	1	bf7f7f
+midibuild	0	99	127	5	bf7f7f
+midibuild	0	99	300	0	bf7f00
+midibuild	0	99	300	0.5	bf7f40
+midibuild	0	99	300	1	bf7f7f
+midibuild	0	99	300	5	bf7f7f
+midibuild	1	1	-5	-1	900000
+midibuild	1	1	-5	0	900000
+midibuild	1	1	-5	0.001	900000
+midibuild	1	1	-5	0.25	900020
+midibuild	1	1	-5	0.5	900040
+midibuild	1	1	-5	0.50393700787401574	900040
+midibuild	1	1	-5	0.999	90007f
+midibuild	1	1	-5	1	90007f
+midibuild	1	1	-5	2.5	90007f
+midibuild	1	1	0	-1	900000
+midibuild	1	1	0	0	900000
+midibuild	1	1	0	0.001	900000
+midibuild	1	1	0	0.25	900020
+midibuild	1	1	0	0.5	900040
+midibuild	1	1	0	0.50393700787401574	900040
+midibuild	1	1	0	0.999	90007f
+midibuild	1	1	0	1	90007f
+midibuild	1	1	0	2.5	90007f
+midibuild	1	1	1	-1	900100
+midibuild	1	1	1	0	900100
+midibuild	1	1	1	0.001	900100
+midibuild	1	1	1	0.25	900120
+midibuild	1	1	1	0.5	900140
+midibuild	1	1	1	0.50393700787401574	900140
+midibuild	1	1	1	0.999	90017f
+midibuild	1	1	1	1	90017f
+midibuild	1	1	1	2.5	90017f
+midibuild	1	1	60	-1	903c00
+midibuild	1	1	60	0	903c00
+midibuild	1	1	60	0.001	903c00
+midibuild	1	1	60	0.25	903c20
+midibuild	1	1	60	0.5	903c40
+midibuild	1	1	60	0.50393700787401574	903c40
+midibuild	1	1	60	0.999	903c7f
+midibuild	1	1	60	1	903c7f
+midibuild	1	1	60	2.5	903c7f
+midibuild	1	1	127	-1	907f00
+midibuild	1	1	127	0	907f00
+midibuild	1	1	127	0.001	907f00
+midibuild	1	1	127	0.25	907f20
+midibuild	1	1	127	0.5	907f40
+midibuild	1	1	127	0.50393700787401574	907f40
+midibuild	1	1	127	0.999	907f7f
+midibuild	1	1	127	1	907f7f
+midibuild	1	1	127	2.5	907f7f
+midibuild	1	1	128	-1	907f00
+midibuild	1	1	128	0	907f00
+midibuild	1	1	128	0.001	907f00
+midibuild	1	1	128	0.25	907f20
+midibuild	1	1	128	0.5	907f40
+midibuild	1	1	128	0.50393700787401574	907f40
+midibuild	1	1	128	0.999	907f7f
+midibuild	1	1	128	1	907f7f
+midibuild	1	1	128	2.5	907f7f
+midibuild	1	1	500	-1	907f00
+midibuild	1	1	500	0	907f00
+midibuild	1	1	500	0.001	907f00
+midibuild	1	1	500	0.25	907f20
+midibuild	1	1	500	0.5	907f40
+midibuild	1	1	500	0.50393700787401574	907f40
+midibuild	1	1	500	0.999	907f7f
+midibuild	1	1	500	1	907f7f
+midibuild	1	1	500	2.5	907f7f
+midibuild	1	16	-5	-1	9f0000
+midibuild	1	16	-5	0	9f0000
+midibuild	1	16	-5	0.001	9f0000
+midibuild	1	16	-5	0.25	9f0020
+midibuild	1	16	-5	0.5	9f0040
+midibuild	1	16	-5	0.50393700787401574	9f0040
+midibuild	1	16	-5	0.999	9f007f
+midibuild	1	16	-5	1	9f007f
+midibuild	1	16	-5	2.5	9f007f
+midibuild	1	16	0	-1	9f0000
+midibuild	1	16	0	0	9f0000
+midibuild	1	16	0	0.001	9f0000
+midibuild	1	16	0	0.25	9f0020
+midibuild	1	16	0	0.5	9f0040
+midibuild	1	16	0	0.50393700787401574	9f0040
+midibuild	1	16	0	0.999	9f007f
+midibuild	1	16	0	1	9f007f
+midibuild	1	16	0	2.5	9f007f
+midibuild	1	16	1	-1	9f0100
+midibuild	1	16	1	0	9f0100
+midibuild	1	16	1	0.001	9f0100
+midibuild	1	16	1	0.25	9f0120
+midibuild	1	16	1	0.5	9f0140
+midibuild	1	16	1	0.50393700787401574	9f0140
+midibuild	1	16	1	0.999	9f017f
+midibuild	1	16	1	1	9f017f
+midibuild	1	16	1	2.5	9f017f
+midibuild	1	16	60	-1	9f3c00
+midibuild	1	16	60	0	9f3c00
+midibuild	1	16	60	0.001	9f3c00
+midibuild	1	16	60	0.25	9f3c20
+midibuild	1	16	60	0.5	9f3c40
+midibuild	1	16	60	0.50393700787401574	9f3c40
+midibuild	1	16	60	0.999	9f3c7f
+midibuild	1	16	60	1	9f3c7f
+midibuild	1	16	60	2.5	9f3c7f
+midibuild	1	16	127	-1	9f7f00
+midibuild	1	16	127	0	9f7f00
+midibuild	1	16	127	0.001	9f7f00
+midibuild	1	16	127	0.25	9f7f20
+midibuild	1	16	127	0.5	9f7f40
+midibuild	1	16	127	0.50393700787401574	9f7f40
+midibuild	1	16	127	0.999	9f7f7f
+midibuild	1	16	127	1	9f7f7f
+midibuild	1	16	127	2.5	9f7f7f
+midibuild	1	16	128	-1	9f7f00
+midibuild	1	16	128	0	9f7f00
+midibuild	1	16	128	0.001	9f7f00
+midibuild	1	16	128	0.25	9f7f20
+midibuild	1	16	128	0.5	9f7f40
+midibuild	1	16	128	0.50393700787401574	9f7f40
+midibuild	1	16	128	0.999	9f7f7f
+midibuild	1	16	128	1	9f7f7f
+midibuild	1	16	128	2.5	9f7f7f
+midibuild	1	16	500	-1	9f7f00
+midibuild	1	16	500	0	9f7f00
+midibuild	1	16	500	0.001	9f7f00
+midibuild	1	16	500	0.25	9f7f20
+midibuild	1	16	500	0.5	9f7f40
+midibuild	1	16	500	0.50393700787401574	9f7f40
+midibuild	1	16	500	0.999	9f7f7f
+midibuild	1	16	500	1	9f7f7f
+midibuild	1	16	500	2.5	9f7f7f
+midibuild	1	0	-5	-1	900000
+midibuild	1	0	-5	0	900000
+midibuild	1	0	-5	0.001	900000
+midibuild	1	0	-5	0.25	900020
+midibuild	1	0	-5	0.5	900040
+midibuild	1	0	-5	0.50393700787401574	900040
+midibuild	1	0	-5	0.999	90007f
+midibuild	1	0	-5	1	90007f
+midibuild	1	0	-5	2.5	90007f
+midibuild	1	0	0	-1	900000
+midibuild	1	0	0	0	900000
+midibuild	1	0	0	0.001	900000
+midibuild	1	0	0	0.25	900020
+midibuild	1	0	0	0.5	900040
+midibuild	1	0	0	0.50393700787401574	900040
+midibuild	1	0	0	0.999	90007f
+midibuild	1	0	0	1	90007f
+midibuild	1	0	0	2.5	90007f
+midibuild	1	0	1	-1	900100
+midibuild	1	0	1	0	900100
+midibuild	1	0	1	0.001	900100
+midibuild	1	0	1	0.25	900120
+midibuild	1	0	1	0.5	900140
+midibuild	1	0	1	0.50393700787401574	900140
+midibuild	1	0	1	0.999	90017f
+midibuild	1	0	1	1	90017f
+midibuild	1	0	1	2.5	90017f
+midibuild	1	0	60	-1	903c00
+midibuild	1	0	60	0	903c00
+midibuild	1	0	60	0.001	903c00
+midibuild	1	0	60	0.25	903c20
+midibuild	1	0	60	0.5	903c40
+midibuild	1	0	60	0.50393700787401574	903c40
+midibuild	1	0	60	0.999	903c7f
+midibuild	1	0	60	1	903c7f
+midibuild	1	0	60	2.5	903c7f
+midibuild	1	0	127	-1	907f00
+midibuild	1	0	127	0	907f00
+midibuild	1	0	127	0.001	907f00
+midibuild	1	0	127	0.25	907f20
+midibuild	1	0	127	0.5	907f40
+midibuild	1	0	127	0.50393700787401574	907f40
+midibuild	1	0	127	0.999	907f7f
+midibuild	1	0	127	1	907f7f
+midibuild	1	0	127	2.5	907f7f
+midibuild	1	0	128	-1	907f00
+midibuild	1	0	128	0	907f00
+midibuild	1	0	128	0.001	907f00
+midibuild	1	0	128	0.25	907f20
+midibuild	1	0	128	0.5	907f40
+midibuild	1	0	128	0.50393700787401574	907f40
+midibuild	1	0	128	0.999	907f7f
+midibuild	1	0	128	1	907f7f
+midibuild	1	0	128	2.5	907f7f
+midibuild	1	0	500	-1	907f00
+midibuild	1	0	500	0	907f00
+midibuild	1	0	500	0.001	907f00
+midibuild	1	0	500	0.25	907f20
+midibuild	1	0	500	0.5	907f40
+midibuild	1	0	500	0.50393700787401574	907f40
+midibuild	1	0	500	0.999	907f7f
+midibuild	1	0	500	1	907f7f
+midibuild	1	0	500	2.5	907f7f
+midibuild	2	1	-5	0	800000
+midibuild	2	1	0	0	800000
+midibuild	2	1	1	0	800100
+midibuild	2	1	60	0	803c00
+midibuild	2	1	127	0	807f00
+midibuild	2	1	128	0	807f00
+midibuild	2	1	500	0	807f00
+midibuild	2	16	-5	0	8f0000
+midibuild	2	16	0	0	8f0000
+midibuild	2	16	1	0	8f0100
+midibuild	2	16	60	0	8f3c00
+midibuild	2	16	127	0	8f7f00
+midibuild	2	16	128	0	8f7f00
+midibuild	2	16	500	0	8f7f00
+midibuild	2	99	-5	0	8f0000
+midibuild	2	99	0	0	8f0000
+midibuild	2	99	1	0	8f0100
+midibuild	2	99	60	0	8f3c00
+midibuild	2	99	127	0	8f7f00
+midibuild	2	99	128	0	8f7f00
+midibuild	2	99	500	0	8f7f00
+midibuild	3	1	0	-1	e00000
+midibuild	3	1	0	0	e00000
+midibuild	3	1	0	0.001	e01000
+midibuild	3	1	0	0.25	e00020
+midibuild	3	1	0	0.5	e00040
+midibuild	3	1	0	0.50393700787401574	e04040
+midibuild	3	1	0	0.999	e06f7f
+midibuild	3	1	0	1	e07f7f
+midibuild	3	1	0	2.5	e07f7f
+midibuild	3	2	0	-1	e10000
+midibuild	3	2	0	0	e10000
+midibuild	3	2	0	0.001	e11000
+midibuild	3	2	0	0.25	e10020
+midibuild	3	2	0	0.5	e10040
+midibuild	3	2	0	0.50393700787401574	e14040
+midibuild	3	2	0	0.999	e16f7f
+midibuild	3	2	0	1	e17f7f
+midibuild	3	2	0	2.5	e17f7f
+midibuild	3	16	0	-1	ef0000
+midibuild	3	16	0	0	ef0000
+midibuild	3	16	0	0.001	ef1000
+midibuild	3	16	0	0.25	ef0020
+midibuild	3	16	0	0.5	ef0040
+midibuild	3	16	0	0.50393700787401574	ef4040
+midibuild	3	16	0	0.999	ef6f7f
+midibuild	3	16	0	1	ef7f7f
+midibuild	3	16	0	2.5	ef7f7f
+midibuild	4	1	-5	0	c000
+midibuild	4	1	0	0	c000
+midibuild	4	1	1	0	c001
+midibuild	4	1	60	0	c03c
+midibuild	4	1	127	0	c07f
+midibuild	4	1	128	0	c07f
+midibuild	4	1	500	0	c07f
+midibuild	4	16	-5	0	cf00
+midibuild	4	16	0	0	cf00
+midibuild	4	16	1	0	cf01
+midibuild	4	16	60	0	cf3c
+midibuild	4	16	127	0	cf7f
+midibuild	4	16	128	0	cf7f
+midibuild	4	16	500	0	cf7f
+midibuild	4	0	-5	0	c000
+midibuild	4	0	0	0	c000
+midibuild	4	0	1	0	c001
+midibuild	4	0	60	0	c03c
+midibuild	4	0	127	0	c07f
+midibuild	4	0	128	0	c07f
+midibuild	4	0	500	0	c07f
+midiparse	800000	1	1	1	0	0
+midiparse	800102	1	1	1	1	0
+midiparse	803c64	1	1	1	60	0
+midiparse	807f7f	1	1	1	127	0
+midiparse	808589	1	1	1	5	0
+midiparse	80007f	1	1	1	0	0
+midiparse	807f00	1	1	1	127	0
+midiparse	804040	1	1	1	64	0
+midiparse	810000	1	1	2	0	0
+midiparse	810102	1	1	2	1	0
+midiparse	813c64	1	1	2	60	0
+midiparse	817f7f	1	1	2	127	0
+midiparse	818589	1	1	2	5	0
+midiparse	81007f	1	1	2	0	0
+midiparse	817f00	1	1	2	127	0
+midiparse	814040	1	1	2	64	0
+midiparse	8f0000	1	1	16	0	0
+midiparse	8f0102	1	1	16	1	0
+midiparse	8f3c64	1	1	16	60	0
+midiparse	8f7f7f	1	1	16	127	0
+midiparse	8f8589	1	1	16	5	0
+midiparse	8f007f	1	1	16	0	0
+midiparse	8f7f00	1	1	16	127	0
+midiparse	8f4040	1	1	16	64	0
+midiparse	900000	1	1	1	0	0
+midiparse	900102	1	1	1	1	0.015748031496062992
+midiparse	903c64	1	1	1	60	0.78740157480314965
+midiparse	907f7f	1	1	1	127	1
+midiparse	908589	1	1	1	5	0.070866141732283464
+midiparse	90007f	1	1	1	0	1
+midiparse	907f00	1	1	1	127	0
+midiparse	904040	1	1	1	64	0.50393700787401574
+midiparse	950000	1	1	6	0	0
+midiparse	950102	1	1	6	1	0.015748031496062992
+midiparse	953c64	1	1	6	60	0.78740157480314965
+midiparse	957f7f	1	1	6	127	1
+midiparse	958589	1	1	6	5	0.070866141732283464
+midiparse	95007f	1	1	6	0	1
+midiparse	957f00	1	1	6	127	0
+midiparse	954040	1	1	6	64	0.50393700787401574
+midiparse	9f0000	1	1	16	0	0
+midiparse	9f0102	1	1	16	1	0.015748031496062992
+midiparse	9f3c64	1	1	16	60	0.78740157480314965
+midiparse	9f7f7f	1	1	16	127	1
+midiparse	9f8589	1	1	16	5	0.070866141732283464
+midiparse	9f007f	1	1	16	0	1
+midiparse	9f7f00	1	1	16	127	0
+midiparse	9f4040	1	1	16	64	0.50393700787401574
+midiparse	a00000	0	-1	0	0	0
+midiparse	a00102	0	-1	0	0	0
+midiparse	a03c64	0	-1	0	0	0
+midiparse	a07f7f	0	-1	0	0	0
+midiparse	a08589	0	-1	0	0	0
+midiparse	a0007f	0	-1	0	0	0
+midiparse	a07f00	0	-1	0	0	0
+midiparse	a04040	0	-1	0	0	0
+midiparse	b00000	1	0	1	0	0
+midiparse	b00102	1	0	1	1	0.015748031496062992
+midiparse	b03c64	1	0	1	60	0.78740157480314965
+midiparse	b07f7f	1	0	1	127	1
+midiparse	b08589	1	0	1	5	0.070866141732283464
+midiparse	b0007f	1	0	1	0	1
+midiparse	b07f00	1	0	1	127	0
+midiparse	b04040	1	0	1	64	0.50393700787401574
+midiparse	b30000	1	0	4	0	0
+midiparse	b30102	1	0	4	1	0.015748031496062992
+midiparse	b33c64	1	0	4	60	0.78740157480314965
+midiparse	b37f7f	1	0	4	127	1
+midiparse	b38589	1	0	4	5	0.070866141732283464
+midiparse	b3007f	1	0	4	0	1
+midiparse	b37f00	1	0	4	127	0
+midiparse	b34040	1	0	4	64	0.50393700787401574
+midiparse	bf0000	1	0	16	0	0
+midiparse	bf0102	1	0	16	1	0.015748031496062992
+midiparse	bf3c64	1	0	16	60	0.78740157480314965
+midiparse	bf7f7f	1	0	16	127	1
+midiparse	bf8589	1	0	16	5	0.070866141732283464
+midiparse	bf007f	1	0	16	0	1
+midiparse	bf7f00	1	0	16	127	0
+midiparse	bf4040	1	0	16	64	0.50393700787401574
+midiparse	c00000	1	3	1	0	1
+midiparse	c00102	1	3	1	1	1
+midiparse	c03c64	1	3	1	60	1
+midiparse	c07f7f	1	3	1	127	1
+midiparse	c08589	1	3	1	5	1
+midiparse	c0007f	1	3	1	0	1
+midiparse	c07f00	1	3	1	127	1
+midiparse	c04040	1	3	1	64	1
+midiparse	c90000	1	3	10	0	1
+midiparse	c90102	1	3	10	1	1
+midiparse	c93c64	1	3	10	60	1
+midiparse	c97f7f	1	3	10	127	1
+midiparse	c98589	1	3	10	5	1
+midiparse	c9007f	1	3	10	0	1
+midiparse	c97f00	1	3	10	127	1
+midiparse	c94040	1	3	10	64	1
+midiparse	cf0000	1	3	16	0	1
+midiparse	cf0102	1	3	16	1	1
+midiparse	cf3c64	1	3	16	60	1
+midiparse	cf7f7f	1	3	16	127	1
+midiparse	cf8589	1	3	16	5	1
+midiparse	cf007f	1	3	16	0	1
+midiparse	cf7f00	1	3	16	127	1
+midiparse	cf4040	1	3	16	64	1
+midiparse	d00000	0	-1	0	0	0
+midiparse	d00102	0	-1	0	0	0
+midiparse	d03c64	0	-1	0	0	0
+midiparse	d07f7f	0	-1	0	0	0
+midiparse	d08589	0	-1	0	0	0
+midiparse	d0007f	0	-1	0	0	0
+midiparse	d07f00	0	-1	0	0	0
+midiparse	d04040	0	-1	0	0	0
+midiparse	e00000	1	2	1	0	0
+midiparse	e00102	1	2	1	0	0.015686992614295306
+midiparse	e03c64	1	2	1	0	0.78496001953244221
+midiparse	e07f7f	1	2	1	0	1
+midiparse	e08589	1	2	1	0	0.07062198620521272
+midiparse	e0007f	1	2	1	0	0.99224806201550386
+midiparse	e07f00	1	2	1	0	0.0077519379844961239
+midiparse	e04040	1	2	1	0	0.50393700787401574
+midiparse	e70000	1	2	8	0	0
+midiparse	e70102	1	2	8	0	0.015686992614295306
+midiparse	e73c64	1	2	8	0	0.78496001953244221
+midiparse	e77f7f	1	2	8	0	1
+midiparse	e78589	1	2	8	0	0.07062198620521272
+midiparse	e7007f	1	2	8	0	0.99224806201550386
+midiparse	e77f00	1	2	8	0	0.0077519379844961239
+midiparse	e74040	1	2	8	0	0.50393700787401574
+midiparse	ef0000	1	2	16	0	0
+midiparse	ef0102	1	2	16	0	0.015686992614295306
+midiparse	ef3c64	1	2	16	0	0.78496001953244221
+midiparse	ef7f7f	1	2	16	0	1
+midiparse	ef8589	1	2	16	0	0.07062198620521272
+midiparse	ef007f	1	2	16	0	0.99224806201550386
+midiparse	ef7f00	1	2	16	0	0.0077519379844961239
+midiparse	ef4040	1	2	16	0	0.50393700787401574
+midiparse	f00000	0	-1	0	0	0
+midiparse	f00102	0	-1	0	0	0
+midiparse	f03c64	0	-1	0	0	0
+midiparse	f07f7f	0	-1	0	0	0
+midiparse	f08589	0	-1	0	0	0
+midiparse	f0007f	0	-1	0	0	0
+midiparse	f07f00	0	-1	0	0	0
+midiparse	f04040	0	-1	0	0	0
+midiparse	f80000	0	-1	0	0	0
+midiparse	f80102	0	-1	0	0	0
+midiparse	f83c64	0	-1	0	0	0
+midiparse	f87f7f	0	-1	0	0	0
+midiparse	f88589	0	-1	0	0	0
+midiparse	f8007f	0	-1	0	0	0
+midiparse	f87f00	0	-1	0	0	0
+midiparse	f84040	0	-1	0	0	0
+midiparse	fe0000	0	-1	0	0	0
+midiparse	fe0102	0	-1	0	0	0
+midiparse	fe3c64	0	-1	0	0	0
+midiparse	fe7f7f	0	-1	0	0	0
+midiparse	fe8589	0	-1	0	0	0
+midiparse	fe007f	0	-1	0	0	0
+midiparse	fe7f00	0	-1	0	0	0
+midiparse	fe4040	0	-1	0	0	0
+midiparse	ff0000	0	-1	0	0	0
+midiparse	ff0102	0	-1	0	0	0
+midiparse	ff3c64	0	-1	0	0	0
+midiparse	ff7f7f	0	-1	0	0	0
+midiparse	ff8589	0	-1	0	0	0
+midiparse	ff007f	0	-1	0	0	0
+midiparse	ff7f00	0	-1	0	0	0
+midiparse	ff4040	0	-1	0	0	0
+midiparse	000000	0	-1	0	0	0
+midiparse	000102	0	-1	0	0	0
+midiparse	003c64	0	-1	0	0	0
+midiparse	007f7f	0	-1	0	0	0
+midiparse	008589	0	-1	0	0	0
+midiparse	00007f	0	-1	0	0	0
+midiparse	007f00	0	-1	0	0	0
+midiparse	004040	0	-1	0	0	0
+midiparse	3c0000	0	-1	0	0	0
+midiparse	3c0102	0	-1	0	0	0
+midiparse	3c3c64	0	-1	0	0	0
+midiparse	3c7f7f	0	-1	0	0	0
+midiparse	3c8589	0	-1	0	0	0
+midiparse	3c007f	0	-1	0	0	0
+midiparse	3c7f00	0	-1	0	0	0
+midiparse	3c4040	0	-1	0	0	0
+midiparse	7f0000	0	-1	0	0	0
+midiparse	7f0102	0	-1	0	0	0
+midiparse	7f3c64	0	-1	0	0	0
+midiparse	7f7f7f	0	-1	0	0	0
+midiparse	7f8589	0	-1	0	0	0
+midiparse	7f007f	0	-1	0	0	0
+midiparse	7f7f00	0	-1	0	0	0
+midiparse	7f4040	0	-1	0	0	0
+midiparse		0	-1	0	0	0
+midiparse	90	0	-1	0	0	0
+midiparse	9005	0	-1	0	0	0
+midiparse		0	-1	0	0	0
+midiparse	b0	0	-1	0	0	0
+midiparse	b005	0	-1	0	0	0
+midiparse		0	-1	0	0	0
+midiparse	c0	0	-1	0	0	0
+midiparse	c005	1	3	1	5	1
+midiparse		0	-1	0	0	0
+midiparse	e0	0	-1	0	0	0
+midiparse	e005	0	-1	0	0	0
+midiparse		0	-1	0	0	0
+midiparse	80	0	-1	0	0	0
+midiparse	8005	0	-1	0	0	0
+midiparse	903c64aabb	1	1	1	60	0.78740157480314965

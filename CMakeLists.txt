@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(pxs-core VERSION 0.2.0 LANGUAGES CXX
+project(pxs-core VERSION 0.3.0 LANGUAGES CXX
         DESCRIPTION "Portable wire-format codecs shared by Pixel Stereo applications (no Qt, no platform API)")
 
 # A parent that already pulled pxs-core in (pxs-qt, then an application that also adds it directly) must not define the
@@ -60,6 +60,21 @@ pxs_core_module(websocket
     HEADERS include/pxs/core/websocket/frame.h src/detail/sha1.h src/detail/base64.h)
 target_include_directories(pxs_core_websocket PRIVATE src)
 
+pxs_core_module(midi
+    SOURCES src/midi_message.cpp
+    HEADERS include/pxs/core/midi/message.h)
+
+# Header-only: the observer of changes (the OSC feedback).
+find_package(Threads REQUIRED)
+add_library(pxs_core_feed INTERFACE)
+add_library(pxs-core::feed ALIAS pxs_core_feed)
+set_target_properties(pxs_core_feed PROPERTIES EXPORT_NAME feed)
+target_compile_features(pxs_core_feed INTERFACE cxx_std_17)
+target_include_directories(pxs_core_feed INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(pxs_core_feed INTERFACE Threads::Threads)
+
 if(PXS_CORE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
@@ -69,7 +84,7 @@ if(PXS_CORE_BUILD_FUZZERS)
 endif()
 
 if(PXS_CORE_INSTALL)
-    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket EXPORT pxs-core-targets
+    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_feed EXPORT pxs-core-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY include/pxs DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/pxs/core/version.h
