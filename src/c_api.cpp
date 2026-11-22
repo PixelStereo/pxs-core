@@ -416,9 +416,10 @@ int pxs_dmx_decode(const std::uint8_t *data, std::size_t size, int sacn, pxs_dmx
         f->sequence = frame.sequence;
         f->length = frame.length;
         f->terminated = frame.terminated ? 1 : 0;
-        std::memcpy(f->cid, frame.cid.data(), std::min<std::size_t>(frame.cid.size(), 16));
-        std::memcpy(f->name, frame.name.data(), std::min<std::size_t>(frame.name.size(), sizeof f->name - 1));
-        std::memcpy(f->values, frame.values.data(), std::min<std::size_t>(frame.values.size(), 512));
+        // (memcpy takes no null pointer, even for no bytes: an empty vector's data() may be one)
+        if (!frame.cid.empty()) std::memcpy(f->cid, frame.cid.data(), std::min<std::size_t>(frame.cid.size(), 16));
+        if (!frame.name.empty()) std::memcpy(f->name, frame.name.data(), std::min<std::size_t>(frame.name.size(), sizeof f->name - 1));
+        if (!frame.values.empty()) std::memcpy(f->values, frame.values.data(), std::min<std::size_t>(frame.values.size(), 512));
         return PXS_OK;
     })
 }

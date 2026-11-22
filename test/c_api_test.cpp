@@ -250,7 +250,7 @@ void dmx()
     CHECK_EQ(size, size_t(638));
     pxs_dmx_frame back;
     CHECK_EQ(pxs_dmx_decode(bytes, size, 1, &back), PXS_OK);
-    CHECK(back.universe == 7 && back.priority == 100 && back.sequence == 9 && std::string(back.name) == "Pixel Stereo" && back.values[300] == uint8_t(300));
+    CHECK(back.universe == 7 && back.priority == 100 && back.sequence == 9 && std::string(back.name) == "Pixel Stereo" && back.values[300] == static_cast<uint8_t>(300 & 255));
     CHECK_EQ(pxs_dmx_decode(bytes, size, 0, &back), PXS_ERR_MALFORMED); // the other protocol
     pxs_free(bytes);
     f.universe = 0; // out of range for sACN
