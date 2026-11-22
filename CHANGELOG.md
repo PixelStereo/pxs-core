@@ -3,6 +3,19 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.8.0
+
+### Added
+- `pxs/core/tree/oscquery_server.h`: what an OSCQuery server answers to an HTTP request, without the HTTP: `answerRequest(tree, info,
+  method, target)` -> status and JSON body (200 / 204 / 400 / 404 / 405, as the Qt server did), `splitTarget`, `originAllowed` (which page
+  may open a WebSocket: none, localhost, loopback, or an address of this machine), `parseCommand` (the LISTEN / IGNORE of a WebSocket text
+  message). The server (QTcpServer, `dart:io`'s HttpServer, a socket of its own) reads the request and writes the answer.
+- Compared with `QUrl` (the parser the Qt server used) on 400k random targets: the same path and query for every origin-form target (starting
+  with one `/`) except these, which differ on purpose: a non-ASCII query is not upper-cased (attribute names are ASCII), a `%2F` or `%23` in a
+  path is decoded (QUrl keeps them encoded), a malformed `%` leaves the other escapes decoded (QUrl leaves the whole component encoded), a
+  target that starts with `//` or a scheme is read as a path (QUrl reads an authority, or calls it invalid: 400).
+- Fuzz target: arbitrary request targets.
+
 ## 0.7.0
 
 ### Added
