@@ -77,6 +77,11 @@ std::size_t scalarCount(const std::string &type)
 
 Json rangeEntry(const ArgRange &r)
 {
+    if (!r.items.empty()) { // an array's: a nested array of ranges
+        Json a = Json::array();
+        for (const ArgRange &item : r.items) a.push_back(rangeEntry(item));
+        return a;
+    }
     Json o = Json::object();
     if (r.min) o["MIN"] = numberJson(r.min->number().value_or(0.0));
     if (r.max) o["MAX"] = numberJson(r.max->number().value_or(0.0));

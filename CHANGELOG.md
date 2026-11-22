@@ -3,6 +3,12 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.7.0
+
+### Added
+- `ArgRange::items`: the range of an array in the type tags (`"i[ff]i"`) is a nested array of ranges, as OSCQuery writes it (the Qt tree
+  allowed it through a free-form JSON range; the portable `ArgRange` could not say it).
+
 ## 0.6.0
 
 ### Added
