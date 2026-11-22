@@ -75,7 +75,7 @@ jobs:
         run: |
           lib=$(find build -maxdepth 1 \( -name 'libpxs_c.so' -o -name 'libpxs_c.dylib' \) | head -1)
           test -n "$lib"
-          if [ "$RUNNER_OS" = macOS ]; then symbols=$(nm -gU "$lib" | awk '{print $3}' | sed 's/^_//'); else symbols=$(nm -D --defined-only "$lib" | awk '{print $3}'); fi
+          if [ "$RUNNER_OS" = macOS ]; then symbols=$(nm -gU "$lib" | awk '{print $3}' | sed 's/^_//'); else symbols=$(nm -D --defined-only "$lib" | awk '$2 != "A" {print $3}'); fi # (an absolute symbol is the version node's name)
           echo "$symbols" | grep -v '^pxs_' | grep -v '^$' && { echo "exports more than pxs_*"; exit 1; } || true
           test "$(echo "$symbols" | grep -c '^pxs_')" -eq "$(grep -c '^PXS_API' include/pxs/c/pxs.h)"
 
