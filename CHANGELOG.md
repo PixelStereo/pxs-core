@@ -3,6 +3,15 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.4.0
+
+### Added
+- `pxs-core::value`: `Value`, the closed set of types of the address space (Nil, bool, int32, int64, float, double, string,
+  Vec2, Vec3, Vec4, blob) with explicit, locale-independent conversions: `number()` (text read as a decimal number, "inf" and
+  "nan", nothing on overflow or underflow), `truthy()`, `text()` (shortest text that reads back), and `ValueList`. Golden
+  vectors for the reading of numbers in text come from Qt 6.12; QVariant's other conversions (an out-of-range double wrapping
+  to an int, "0.4" being true) are deliberately not kept. Fuzz target for number reading and printing.
+
 ## 0.3.0
 
 ### Added

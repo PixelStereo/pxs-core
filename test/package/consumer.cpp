@@ -1,6 +1,7 @@
 #include <pxs/core/dmx/frame.h>
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/midi/message.h>
+#include <pxs/core/value.h>
 #include <pxs/core/osc/codec.h>
 #include <pxs/core/websocket/frame.h>
 
@@ -17,5 +18,6 @@ int main()
     const bool midi = pxs::core::midi::parse(cc.data(), cc.size(), note) && note.number == 7;
     pxs::core::ChangeFeed feed;
     const bool quiet = !feed.listening();
-    return osc && ws && dmx && midi && quiet ? 0 : 1;
+    const bool value = pxs::core::Value("0.5").number() == 0.5;
+    return osc && ws && dmx && midi && quiet && value ? 0 : 1;
 }
