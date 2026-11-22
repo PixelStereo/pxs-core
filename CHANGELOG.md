@@ -3,6 +3,13 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## Unreleased
+
+### Changed
+- **Dual licence**: AGPL-3.0-only **or** a commercial licence from the copyright holder (`LICENSING.md`, `LICENSES/`,
+  `REUSE.toml`), checked by `reuse lint` in CI. Contributions come with a licence grant that keeps this possible
+  (`CONTRIBUTING.md`). The AGPL option is unchanged.
+
 ## 0.2.0
 
 ### Added

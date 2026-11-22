@@ -61,4 +61,6 @@ a consumer.
 
 ## License
 
-GNU Affero General Public License, version 3; see `LICENSE`.
+**Dual-licensed**: the GNU Affero General Public License, version 3 (`LICENSE`), **or** a commercial licence from the
+copyright holder under a separate agreement, for products and stores the AGPL does not fit (a closed-source app, the Apple
+App Store…). See [LICENSING.md](LICENSING.md); contributions follow [CONTRIBUTING.md](CONTRIBUTING.md).
