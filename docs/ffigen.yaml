@@ -1,0 +1,23 @@
+# Dart bindings for the C interface:  dart run ffigen --config docs/ffigen.yaml
+name: PxsBindings
+description: Bindings to pxs-core's C interface (include/pxs/c/pxs.h)
+output: 'lib/src/pxs_bindings.g.dart'
+headers:
+  entry-points:
+    - '../include/pxs/c/pxs.h'
+  include-directives:
+    - '../include/pxs/c/pxs.h'
+functions:
+  include:
+    - 'pxs_.*'
+structs:
+  include:
+    - 'pxs_.*'
+enums:
+  include:
+    - 'pxs_.*'
+preamble: |
+  // Generated from pxs-core's include/pxs/c/pxs.h (AGPL-3.0-only OR a commercial licence, see LICENSING.md)
+comments:
+  style: any
+  length: full

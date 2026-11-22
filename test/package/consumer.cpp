@@ -1,3 +1,4 @@
+#include <pxs/c/pxs.h>
 #include <pxs/core/dmx/frame.h>
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/midi/message.h>
@@ -29,5 +30,6 @@ int main()
     const bool json = pxs::core::tree::describeJson(tree, "/beat").find("\"FULL_PATH\":\"/beat\"") != std::string::npos &&
                       pxs::core::tree::Preset::fromJson(pxs::core::tree::capture(tree).toJson()).isEmpty();
     const bool http = pxs::core::tree::answerRequest(tree, pxs::core::tree::ServerInfo{}, "GET", "/beat").status == 200;
-    return osc && ws && dmx && midi && quiet && value && treeOk && json && http ? 0 : 1;
+    const bool c = pxs_api_version() == PXS_C_API_VERSION;
+    return osc && ws && dmx && midi && quiet && value && treeOk && json && http && c ? 0 : 1;
 }

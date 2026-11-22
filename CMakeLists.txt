@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(pxs-core VERSION 0.8.0 LANGUAGES CXX
+project(pxs-core VERSION 0.9.0 LANGUAGES CXX
         DESCRIPTION "Portable wire-format codecs shared by Pixel Stereo applications (no Qt, no platform API)")
 
 # A parent that already pulled pxs-core in (pxs-qt, then an application that also adds it directly) must not define the
@@ -76,6 +76,38 @@ pxs_core_module(midi
     SOURCES src/midi_message.cpp
     HEADERS include/pxs/core/midi/message.h)
 
+# The C interface (a Flutter application through dart:ffi, another language's runtime): every module behind plain functions. The static
+# library always; a shared one (libpxs_c) on request, with only the pxs_* functions exported.
+add_library(pxs_core_c STATIC src/c_api.cpp include/pxs/c/pxs.h)
+add_library(pxs-core::c ALIAS pxs_core_c)
+set_target_properties(pxs_core_c PROPERTIES EXPORT_NAME c POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF)
+target_compile_features(pxs_core_c PUBLIC cxx_std_17)
+target_include_directories(pxs_core_c PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(pxs_core_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+target_link_libraries(pxs_core_c PUBLIC pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+pxs_core_harden(pxs_core_c)
+option(PXS_CORE_BUILD_SHARED_C "Also build libpxs_c, the C interface as a shared library (for dart:ffi, Android, desktop)" OFF)
+if(PXS_CORE_BUILD_SHARED_C)
+    add_library(pxs_c SHARED src/c_api.cpp include/pxs/c/pxs.h)
+    set_target_properties(pxs_c PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON CXX_EXTENSIONS OFF)
+    target_compile_features(pxs_c PUBLIC cxx_std_17)
+    target_compile_definitions(pxs_c PUBLIC PXS_C_SHARED PRIVATE PXS_C_BUILDING)
+    target_include_directories(pxs_c PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    target_include_directories(pxs_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+    target_link_libraries(pxs_c PRIVATE pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+    pxs_core_harden(pxs_c)
+    # Only the pxs_* functions are exported, not the C++ of the modules behind them
+    if(APPLE)
+        target_link_options(pxs_c PRIVATE -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/src/pxs_c.exp)
+    elseif(UNIX)
+        target_link_options(pxs_c PRIVATE -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/pxs_c.map)
+    endif()
+endif()
+
 # Header-only: the observer of changes (the OSC feedback).
 find_package(Threads REQUIRED)
 add_library(pxs_core_feed INTERFACE)
@@ -88,6 +120,7 @@ target_include_directories(pxs_core_feed INTERFACE
 target_link_libraries(pxs_core_feed INTERFACE Threads::Threads)
 
 if(PXS_CORE_BUILD_TESTS)
+    enable_language(C) # the C interface's header is compiled as C as well
     enable_testing()
     add_subdirectory(test)
 endif()
@@ -96,7 +129,7 @@ if(PXS_CORE_BUILD_FUZZERS)
 endif()
 
 if(PXS_CORE_INSTALL)
-    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_feed pxs_core_value pxs_core_tree EXPORT pxs-core-targets
+    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_feed pxs_core_value pxs_core_tree pxs_core_c EXPORT pxs-core-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY include/pxs DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/pxs/core/version.h

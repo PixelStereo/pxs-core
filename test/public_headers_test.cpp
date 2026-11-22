@@ -1,4 +1,5 @@
 // Every public header compiles on its own, includes what it uses, and pulls in nothing from Qt or the platform.
+#include <pxs/c/pxs.h>
 #include <pxs/core/dmx/frame.h>
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/midi/message.h>
