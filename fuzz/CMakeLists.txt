@@ -3,10 +3,10 @@
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "PXS_CORE_BUILD_FUZZERS needs clang (libFuzzer)")
 endif()
-foreach(target osc dmx websocket midi value tree preset)
+foreach(target osc dmx websocket midi value tree preset answer)
     set(module ${target})
-    if(target STREQUAL "preset")
-        set(module tree) # the presets are a part of the tree module
+    if(target STREQUAL "preset" OR target STREQUAL "answer")
+        set(module tree) # the presets and the OSCQuery answers are a part of the tree module
     endif()
     add_executable(fuzz_${target} fuzz_${target}.cpp)
     target_link_libraries(fuzz_${target} PRIVATE pxs-core::${module})

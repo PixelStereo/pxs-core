@@ -2,6 +2,7 @@
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/midi/message.h>
 #include <pxs/core/tree/oscquery.h>
+#include <pxs/core/tree/oscquery_server.h>
 #include <pxs/core/tree/preset.h>
 #include <pxs/core/tree/tree.h>
 #include <pxs/core/value.h>
@@ -27,5 +28,6 @@ int main()
     const bool treeOk = tree.find("/beat") != nullptr && tree.fire("/beat", {pxs::core::Value(1.0f)});
     const bool json = pxs::core::tree::describeJson(tree, "/beat").find("\"FULL_PATH\":\"/beat\"") != std::string::npos &&
                       pxs::core::tree::Preset::fromJson(pxs::core::tree::capture(tree).toJson()).isEmpty();
-    return osc && ws && dmx && midi && quiet && value && treeOk && json ? 0 : 1;
+    const bool http = pxs::core::tree::answerRequest(tree, pxs::core::tree::ServerInfo{}, "GET", "/beat").status == 200;
+    return osc && ws && dmx && midi && quiet && value && treeOk && json && http ? 0 : 1;
 }

@@ -19,6 +19,7 @@ pxs_core_test(public_headers pxs-core::osc pxs-core::dmx pxs-core::websocket pxs
 pxs_core_test(value pxs-core::value)
 pxs_core_test(tree pxs-core::tree)
 pxs_core_test(oscquery pxs-core::tree)
+pxs_core_test(oscquery_server pxs-core::tree)
 pxs_core_test(preset pxs-core::tree)
 pxs_core_test(midi pxs-core::midi)
 pxs_core_test(change_feed pxs-core::feed)
