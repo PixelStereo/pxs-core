@@ -1,0 +1,12 @@
+version = 1
+SPDX-PackageName = "pxs-core"
+SPDX-PackageDownloadLocation = "https://github.com/PixelStereo/pxs-core"
+
+# Every file of this repository is offered under the same two licences: the GNU AGPL v3, or a commercial licence granted
+# by the copyright holder under a separate agreement (see LICENSING.md). The SPDX expression below is the single place
+# that says so; `reuse lint` (run by CI) fails if a file is not covered or a licence text is missing from LICENSES/.
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Pixel Stereo"
+SPDX-License-Identifier = "AGPL-3.0-only OR LicenseRef-PixelStereo-Commercial"

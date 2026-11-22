@@ -1,0 +1,10 @@
+Pixel Stereo commercial licence
+
+pxs-core is also available under a commercial licence, granted by the copyright holder (Pixel Stereo) in a separate
+written agreement. That agreement, not this file, is the licence: this file only says that the option exists, so that the
+SPDX expression "AGPL-3.0-only OR LicenseRef-PixelStereo-Commercial" has a text to refer to.
+
+Without such an agreement, the only licence that applies to you is the GNU Affero General Public License, version 3
+(LICENSES/AGPL-3.0-only.txt).
+
+See LICENSING.md for when you would want the commercial licence and how to ask for it.

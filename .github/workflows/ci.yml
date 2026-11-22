@@ -48,6 +48,14 @@ jobs:
           cmake --build build-package --config Release
           ctest --test-dir build-package --build-config Release --output-on-failure
 
+  # Every file is covered by the dual-licence expression, and every licence it names has its text in LICENSES/.
+  reuse:
+    name: Licences (REUSE)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx run --spec "reuse==6.3.0" reuse lint
+
   sanitizers:
     name: Sanitizers (ASan, UBSan)
     runs-on: ubuntu-latest
