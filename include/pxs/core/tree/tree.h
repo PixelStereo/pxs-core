@@ -36,11 +36,13 @@ class Tree;
 
 enum class Kind { Container, Parameter, Action, Signal };
 
-// The range of one OSC argument: MIN and MAX, or the VALS it can take.
+// The range of one OSC argument: MIN and MAX, or the VALS it can take. For an array in the type tags ("[ff]") `items` holds the range
+// of each of its elements (and the other members are not used): OSCQuery writes it as a nested array.
 struct ArgRange {
     std::optional<Value> min, max;
     std::vector<Value> vals;
-    bool empty() const { return !min && !max && vals.empty(); }
+    std::vector<ArgRange> items;
+    bool empty() const { return !min && !max && vals.empty() && items.empty(); }
 };
 
 class Node

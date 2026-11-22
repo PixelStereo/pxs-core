@@ -48,6 +48,20 @@ void aContainerHasItsContents()
     CHECK(describeJson(t).find("\"FULL_PATH\":\"/\"") != std::string::npos);
 }
 
+void anArrayHasANestedRange()
+{
+    Tree t;
+    Node &n = t.add("/nested");
+    n.type = "i[ff]i";
+    n.access = 3;
+    ArgRange unit{Value(0.0), Value(1.0), {}, {}};
+    n.range = {ArgRange{Value(0), Value(100), {}, {}}, ArgRange{std::nullopt, std::nullopt, {}, {unit, unit}}, ArgRange{Value(0), Value(100), {}, {}}};
+    n.get = [] { return ValueList{Value(100), Value(1.0), Value(1.0), Value(100)}; };
+    const std::string json = describeJson(t, "/nested");
+    CHECK(json.find("\"RANGE\":[{\"MAX\":100.0,\"MIN\":0.0},[{\"MAX\":1.0,\"MIN\":0.0},{\"MAX\":1.0,\"MIN\":0.0}],{\"MAX\":100.0,\"MIN\":0.0}]") != std::string::npos);
+    CHECK(json.find("\"VALUE\":[100,[1.0,1.0],100]") != std::string::npos);
+}
+
 void choicesAreListed()
 {
     Tree t;
@@ -158,6 +172,7 @@ int main()
 {
     aParameterIsDescribed();
     aContainerHasItsContents();
+    anArrayHasANestedRange();
     choicesAreListed();
     typeTagsAreWrittenAsOscQueryDoes();
     attributesAreAskedByName();

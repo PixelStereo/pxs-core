@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(pxs-core VERSION 0.6.0 LANGUAGES CXX
+project(pxs-core VERSION 0.7.0 LANGUAGES CXX
         DESCRIPTION "Portable wire-format codecs shared by Pixel Stereo applications (no Qt, no platform API)")
 
 # A parent that already pulled pxs-core in (pxs-qt, then an application that also adds it directly) must not define the
