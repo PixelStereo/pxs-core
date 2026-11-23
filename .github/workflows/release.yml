@@ -1,0 +1,15 @@
+name: Release check
+
+on:
+  push:
+    tags: ['v*']
+
+permissions: { contents: read }
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The tag is the version in VERSION
+        run: scripts/check_version.sh "${GITHUB_REF_NAME}"

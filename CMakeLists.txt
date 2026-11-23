@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
-project(pxs-core VERSION 0.10.0 LANGUAGES CXX
+# The version is in VERSION (one line, written in the release PR); a tag v<VERSION> on main is the release, and CI checks both agree.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" PXS_CORE_VERSION_TEXT LIMIT_COUNT 1)
+project(pxs-core VERSION ${PXS_CORE_VERSION_TEXT} LANGUAGES CXX
         DESCRIPTION "Portable wire-format codecs shared by Pixel Stereo applications (no Qt, no platform API)")
 
 # A parent that already pulled pxs-core in (pxs-qt, then an application that also adds it directly) must not define the
