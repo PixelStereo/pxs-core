@@ -1,3 +1,4 @@
+#include <pxs/core/tree/oscquery.h>
 #include <pxs/core/tree/osc_bridge.h>
 #include <pxs/core/tree/tree.h>
 
@@ -418,6 +419,29 @@ void nodesAreTheTreesOwn()
     CHECK(t.root().children().empty());
 }
 
+void attachedMethodsAreReachedButNotListed()
+{
+    Tree t;
+    Cell level;
+    auto p = make(level, "level", Type::Float);
+    p->range(0, 4).byDefault(Value(1.0));
+    t.add("/layer/level", std::move(p));
+    int resets = 0;
+    Node &reset = t.addAction("/layer/level/reset", "N", [&resets](const ValueList &) { ++resets; return true; }, "Reset level to default");
+    reset.attached = true;
+    Node *level_node = t.find("/layer/level");
+    CHECK(level_node->kind() == Kind::Parameter && !level_node->isContainer() && !level_node->hasListedChildren());
+    CHECK(t.find("/layer/level/reset") == &reset && t.match("/layer/*/reset").size() == 1);
+    CHECK(t.apply("/layer/level/reset", {}) == 1 && resets == 1);
+    const std::string json = describeJson(t, "/layer/level");
+    CHECK(json.find("\"VALUE\"") != std::string::npos && json.find("\"CONTENTS\"") == std::string::npos);
+    CHECK(describeJson(t, "/layer").find("\"CONTENTS\":{\"level\"") != std::string::npos);
+    // A node with a listed child is a container, as before
+    Cell other;
+    t.add("/layer/other/inner", make(other, "inner", Type::Float));
+    CHECK(t.find("/layer/other")->isContainer());
+}
+
 } // namespace
 
 int main()
@@ -439,5 +463,6 @@ int main()
     outputAndMessages();
     conversionsToTheWire();
     nodesAreTheTreesOwn();
+    attachedMethodsAreReachedButNotListed();
     return pxs_test::finish("tree");
 }

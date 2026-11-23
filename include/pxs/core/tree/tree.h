@@ -61,6 +61,9 @@ public:
     std::string description;
     std::string label;       // what an interface shows for it ("Opacity"); empty: its name
     bool locked = false;     // refuses every write (OSC, a mapping, the panel) until unlocked; the application's own code is not stopped
+    // A method of this node (its reset, the setter of a range…): reached by its address like any node, but not listed in the
+    // CONTENTS of its node, and it does not make a parameter a container: the parameter stays a value, with its VALUE
+    bool attached = false;
     std::function<bool()> reset;            // puts the default back (a parameter with a default; empty: nothing to reset)
     std::vector<ArgRange> range;            // one entry per argument
     // What a client may be told besides: one entry per argument ("" for none), and the node's tags
@@ -78,7 +81,14 @@ public:
     std::string displayLabel() const { return label.empty() ? m_name : label; }
     bool animatable() const { return m_parameter && m_parameter->info().animatable; } // a timeline can drive it
     Kind kind() const { return isContainer() ? Kind::Container : m_kind; }
-    bool isContainer() const { return !m_children.empty() || (type.empty() && access == 0); }
+    bool isContainer() const { return hasListedChildren() || (type.empty() && access == 0); }
+    // The children that are listed (the attached methods are not)
+    bool hasListedChildren() const
+    {
+        for (const auto &entry : m_children)
+            if (!entry.second->attached) return true;
+        return false;
+    }
 
 private:
     friend class Tree;
