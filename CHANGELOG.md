@@ -3,6 +3,14 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## Unreleased
+
+### Changed
+- **Attached methods** (`Node::attached`): a method of a node (a parameter's reset, for one) is reached by its address like any
+  node, but is not listed in its parent's CONTENTS and does not make a parameter a container. The parameter keeps its VALUE,
+  is still a preset member, and still tells its listeners when it changes. Before, a parameter with a `reset` child answered
+  as a folder.
+
 ## 0.9.1
 
 ### Added

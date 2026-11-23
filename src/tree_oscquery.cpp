@@ -139,7 +139,8 @@ Json describe(const Node &n, bool contents)
     }
     if (n.isContainer() && contents) { // a container always has CONTENTS (even empty)
         Json children = Json::object();
-        for (const auto &entry : n.children()) children[entry.first] = describe(*entry.second, true);
+        for (const auto &entry : n.children())
+            if (!entry.second->attached) children[entry.first] = describe(*entry.second, true);
         o["CONTENTS"] = children;
     }
     return o;
