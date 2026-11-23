@@ -18,7 +18,7 @@ pulling a GUI toolkit; the Qt applications use the same code through the adapter
 | `pxs-core::feed` | `pxs/core/feed/change_feed.h` | header-only observer of changes (the OSC feedback), lock-free, safe to destroy after `ignore` |
 
 ```cmake
-add_subdirectory(third_party/pxs-core)          # or find_package(pxs-core 0.9 REQUIRED) after `cmake --install`
+add_subdirectory(third_party/pxs-core)          # or find_package(pxs-core REQUIRED) after `cmake --install`
 target_link_libraries(MyTool PRIVATE pxs-core::osc)
 ```
 

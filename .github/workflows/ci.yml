@@ -12,6 +12,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: VERSION and the Dart package agree
+        run: scripts/check_version.sh
+
   # pxs-core has no Qt: these runners have none installed, which is what proves it.
   test:
     name: ${{ matrix.name }}
