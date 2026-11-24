@@ -208,6 +208,9 @@ void main() {
       expect(tree.setValue('/nothing', [1]), isFalse);
       expect(tree.signature(), before);
       expect(tree.leaves(), ['/blend', '/color/tint', '/color/tint/enable', '/go']);
+      tree.clear();
+      expect(tree.leaves(), isEmpty);
+      expect(tree.node('/blend'), isNull);
       tree.dispose();
     });
   });

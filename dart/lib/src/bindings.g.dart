@@ -412,6 +412,18 @@ class PxsBindings {
   late final _pxs_preset_recall = _pxs_preset_recallPtr
       .asFunction<int Function(ffi.Pointer<pxs_tree>, ffi.Pointer<ffi.Char>)>();
 
+  /// Forgets everything (the device went away).
+  void pxs_remote_clear(ffi.Pointer<pxs_remote> remote) {
+    return _pxs_remote_clear(remote);
+  }
+
+  late final _pxs_remote_clearPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_remote>)>>(
+        'pxs_remote_clear',
+      );
+  late final _pxs_remote_clear = _pxs_remote_clearPtr
+      .asFunction<void Function(ffi.Pointer<pxs_remote>)>();
+
   void pxs_remote_free(ffi.Pointer<pxs_remote> remote) {
     return _pxs_remote_free(remote);
   }

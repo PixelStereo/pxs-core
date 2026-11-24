@@ -263,6 +263,8 @@ void theOtherSide()
     char *sig = pxs_remote_signature(r);
     CHECK(sig && std::string(sig).find("/color/tint|f|3") != std::string::npos);
     pxs_free(sig);
+    pxs_remote_clear(r);
+    CHECK(pxs_remote_node(r, "/color/tint") == nullptr);
     pxs_remote_free(r);
     pxs_remote_free(nullptr);
 }

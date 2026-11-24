@@ -144,6 +144,8 @@ PXS_API pxs_remote *pxs_remote_new(void);
 PXS_API void pxs_remote_free(pxs_remote *remote);
 /* Replaces everything with an answer to GET / (JSON text). PXS_OK, or PXS_ERR_MALFORMED when it is not a node. */
 PXS_API int pxs_remote_load(pxs_remote *remote, const char *json);
+/* Forgets everything (the device went away). */
+PXS_API void pxs_remote_clear(pxs_remote *remote);
 /* A value the device told (LISTEN, ?VALUE): `value_json` is the JSON array, one entry per argument. PXS_OK, PXS_ERR_NOT_FOUND or PXS_ERR_MALFORMED. */
 PXS_API int pxs_remote_set_value(pxs_remote *remote, const char *path, const char *value_json);
 /* One node as JSON (free it): path, name, type (OSC type tags), access, kind ("action", "signal" or ""), description, hasValue, container,

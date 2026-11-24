@@ -97,6 +97,12 @@ class PxsRemoteTree {
     return using((arena) => _b.pxs_remote_load(_remote, json.toNativeUtf8(allocator: arena).cast()) == 0);
   }
 
+  /// Forgets everything (the device went away).
+  void clear() {
+    _alive();
+    _b.pxs_remote_clear(_remote);
+  }
+
   /// A value the device told (LISTEN, `?VALUE`): [valueJson] is the JSON array, one entry per argument. false: no such node, or not an array.
   bool setValueJson(String path, String valueJson) {
     _alive();

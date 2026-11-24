@@ -395,6 +395,11 @@ int pxs_remote_load(pxs_remote *r, const char *json)
     PXS_TRY(PXS_ERR_INTERNAL, return r->tree.load(json) ? PXS_OK : PXS_ERR_MALFORMED;)
 }
 
+void pxs_remote_clear(pxs_remote *r)
+{
+    if (r) r->tree.clear();
+}
+
 int pxs_remote_set_value(pxs_remote *r, const char *path, const char *value_json)
 {
     if (!r || !path || !value_json) return PXS_ERR_ARGUMENT;
