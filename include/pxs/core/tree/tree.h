@@ -80,8 +80,12 @@ public:
 
     std::string displayLabel() const { return label.empty() ? m_name : label; }
     bool animatable() const { return m_parameter && m_parameter->info().animatable; } // a timeline can drive it
-    Kind kind() const { return isContainer() ? Kind::Container : m_kind; }
-    bool isContainer() const { return hasListedChildren() || (type.empty() && access == 0); }
+    // A node has a value of its own (a type or an access), whether it holds other nodes or not: "/layer/1/color/tint" is a value and
+    // holds "/layer/1/color/tint/enable". A node with neither is only a container. Being a parameter and holding children are two
+    // separate questions, and these are the answers for every application and every client.
+    bool hasValue() const { return !type.empty() || access != 0; }
+    bool isContainer() const { return !hasValue(); }
+    Kind kind() const { return hasValue() ? m_kind : Kind::Container; }
     // The children that are listed (the attached methods are not)
     bool hasListedChildren() const
     {

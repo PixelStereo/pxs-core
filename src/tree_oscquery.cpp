@@ -137,7 +137,7 @@ Json describe(const Node &n, bool contents)
         if (v.is_discarded() || v.is_null()) continue; // a value that is not JSON, or null: no value
         o[entry.first] = std::move(v);
     }
-    if (n.isContainer() && contents) { // a container always has CONTENTS (even empty)
+    if ((n.isContainer() || n.hasListedChildren()) && contents) { // a container always has CONTENTS (even empty), a value only when it holds nodes
         Json children = Json::object();
         for (const auto &entry : n.children())
             if (!entry.second->attached) children[entry.first] = describe(*entry.second, true);

@@ -187,6 +187,19 @@ void namesAreMadeSafeAndFound()
     CHECK(t.remove("/a_b/c_d") && !t.find("/a_b/c_d/e_f") && !t.remove("/") && !t.remove("/nope"));
 }
 
+void aValueCanHoldNodes()
+{
+    Tree t;
+    Node &tint = t.addSignal("/color/tint", "f"); // a node with a value of its own...
+    t.add("/color/tint/enable").type = "T";       // ...that holds another one
+    CHECK(!tint.isContainer() && tint.hasValue() && tint.hasListedChildren());
+    CHECK(tint.kind() == Kind::Signal);
+    CHECK(t.find("/color")->isContainer() && t.find("/color")->kind() == Kind::Container);
+    const std::string json = describeJson(t, "/color/tint");
+    CHECK(json.find("\"TYPE\"") != std::string::npos);
+    CHECK(json.find("\"CONTENTS\"") != std::string::npos);
+}
+
 void structureIsTold()
 {
     Tree t;
@@ -454,6 +467,7 @@ int main()
     storedValues();
     feedIsToldOfWrites();
     namesAreMadeSafeAndFound();
+    aValueCanHoldNodes();
     structureIsTold();
     parametersActionsSignals();
     patternsReachSeveralNodes();

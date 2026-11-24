@@ -3,6 +3,14 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## Unreleased
+
+### Changed (breaking)
+- **A value can hold nodes.** `Node::isContainer()` is now "has no value of its own" (no type and no access), and `kind()` follows
+  it. A node with a type that also holds listed children (`/layer/1/color/tint` and `/layer/1/color/tint/enable`) is a
+  parameter, not a container: it keeps its VALUE, is a preset member, and tells its listeners; its OSCQuery answer has both
+  TYPE and CONTENTS. New: `Node::hasValue()`. Before, any node with listed children answered as a container.
+
 ## 0.10.0
 
 ### Changed (breaking)
