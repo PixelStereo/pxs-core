@@ -200,6 +200,25 @@ void aValueCanHoldNodes()
     CHECK(json.find("\"CONTENTS\"") != std::string::npos);
 }
 
+void theTreeIsChecked()
+{
+    Tree t;
+    CHECK(t.check().empty());
+    Node &level = t.add("/a/level");
+    level.type = "f";
+    level.access = 3; // numeric, readable, writable, and nothing else
+    const std::vector<std::string> problems = t.check();
+    CHECK_EQ(problems.size(), std::size_t(3)); // no VALUE, no RANGE, no DEFAULT_VALUE
+    level.get = [] { return ValueList{Value(0.5)}; };
+    level.range = {ArgRange{Value(0.0), Value(1.0), {}, {}}};
+    level.defaultValue = [] { return ValueList{Value(0.5)}; };
+    CHECK(t.check().empty());
+    t.add("/a/name").type = "s"; // a text: no range or default asked
+    t.find("/a/name")->access = 1;
+    t.find("/a/name")->get = [] { return ValueList{Value("x")}; };
+    CHECK(t.check().empty());
+}
+
 void structureIsTold()
 {
     Tree t;
@@ -468,6 +487,7 @@ int main()
     feedIsToldOfWrites();
     namesAreMadeSafeAndFound();
     aValueCanHoldNodes();
+    theTreeIsChecked();
     structureIsTold();
     parametersActionsSignals();
     patternsReachSeveralNodes();

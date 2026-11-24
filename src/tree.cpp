@@ -362,6 +362,41 @@ bool Tree::reset(const std::string &path) const
     return true;
 }
 
+namespace {
+bool numericTags(const std::string &type)
+{
+    bool any = false;
+    for (char c : type) {
+        if (c == '[' || c == ']') continue;
+        if (c != 'f' && c != 'i' && c != 'd' && c != 'h') return false;
+        any = true;
+    }
+    return any;
+}
+
+void checkNode(const Node &n, std::vector<std::string> &out)
+{
+    if (n.hasValue() && n.kind() == Kind::Parameter) {
+        const std::string at = n.path();
+        if (n.type.empty()) out.push_back(at + ": a parameter without TYPE");
+        if (n.access == 0) out.push_back(at + ": a parameter without ACCESS");
+        if ((n.access & 1) && !n.get) out.push_back(at + ": readable but has no VALUE (no getter)");
+        if (numericTags(n.type)) {
+            if (n.range.empty()) out.push_back(at + ": numeric but has no RANGE");
+            if ((n.access & 2) && !n.defaultValue) out.push_back(at + ": numeric and writable but has no DEFAULT_VALUE");
+        }
+    }
+    for (const auto &c : n.children()) checkNode(*c.second, out);
+}
+} // namespace
+
+std::vector<std::string> Tree::check() const
+{
+    std::vector<std::string> out;
+    checkNode(m_root, out);
+    return out;
+}
+
 osc::Message Tree::message(const Node &node)
 {
     osc::Message m;

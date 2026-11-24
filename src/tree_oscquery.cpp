@@ -186,6 +186,29 @@ std::string valueJson(char tag, const Value &value) { return scalar(tag, value).
 
 std::string valuesJson(const std::string &type, const ValueList &values) { return valuesJsonOf(type, values).dump(-1, ' ', false, Json::error_handler_t::replace); }
 
+const std::vector<OscQueryAttribute> &oscQueryAttributes()
+{
+    static const std::vector<OscQueryAttribute> all = {
+        {"FULL_PATH", true, "required"},
+        {"CONTENTS", true, "required for a container"},
+        {"TYPE", true, "required for a parameter"},
+        {"ACCESS", true, "required for a parameter"},
+        {"VALUE", true, "required when readable"},
+        {"RANGE", true, "required here for a numeric parameter"},
+        {"DESCRIPTION", true, "optional"},
+        {"TAGS", true, "optional"},
+        {"EXTENDED_TYPE", true, "optional"},
+        {"UNIT", true, "optional"},
+        {"CLIPMODE", true, "optional"},
+        {"CRITICAL", false, "optional, to do: Node::critical is declared, not served"},
+        {"HTML", false, "optional, to do: Node::html is declared, not served"},
+        {"OVERLOADS", false, "optional, to do: Node::overloads is declared, not served"},
+        {"DEFAULT_VALUE", true, "pxs: required here for a writable numeric parameter, a reset is writing it"},
+        {"PXS_LOCKED", true, "pxs"},
+    };
+    return all;
+}
+
 std::string defaultExtensionsJson()
 {
     Json o = Json::object();

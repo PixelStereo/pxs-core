@@ -71,6 +71,11 @@ public:
     std::vector<std::string> unit;          // UNIT: what each argument measures ("distance.m")
     std::vector<std::string> tags;          // TAGS: for a client to search and filter by
     std::function<ValueList()> defaultValue; // DEFAULT_VALUE, what a reset puts back; empty: none
+    // Attributes of OSCQuery that pxs-core does not serve yet (see oscQueryAttributes() in oscquery.h): declared so that the whole
+    // list is in one place. Implement each when an application needs it: serve it in describe(), read it in the clients, test it.
+    bool critical = false;                  // CRITICAL: a write to it must not be lost (the proposal says: sent over TCP)
+    bool html = false;                      // HTML: the node can be fetched as an HTML page
+    std::vector<std::string> overloads;     // OVERLOADS: other type tags the node accepts
     std::string clip;                       // "both" when the range is enforced (CLIPMODE)
     std::function<ValueList()> get;         // the value, one entry per argument
     std::function<bool(const ValueList &)> set; // false: refused (a locked layer, a value that does not fit)
@@ -157,7 +162,12 @@ public:
     // node is made later) is kept and applied when it is added.
     std::vector<std::string> lockedPaths() const;
     void setLockedPaths(const std::vector<std::string> &paths);
-    bool reset(const std::string &path) const; // false: no such node, locked, or nothing to reset
+    bool reset(const std::string &path) const; // false: no such node, locked, or nothing to reset (the reset is the DEFAULT_VALUE written)
+    // What an application's tree must have, the same for every one (what a client counts on). Every node with a value says its TYPE and
+    // ACCESS; a readable parameter has its VALUE (a getter); a numeric parameter has its RANGE, and a writable one its DEFAULT_VALUE,
+    // so that a client can reset it by writing that value (there is no reset address). The problems found, one line each, with the
+    // address; empty when the tree is as it must be. For an application's tests.
+    std::vector<std::string> check() const;
     // Fires a signal (nothing is sent when the path is not a signal), with the arguments its type tags name
     bool fire(const std::string &path, const ValueList &args = {}) const;
     // Says that a parameter now holds another value (the feedback: its current message goes to the output)

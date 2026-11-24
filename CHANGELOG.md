@@ -11,6 +11,13 @@ decoder accepts is breaking unless it only makes a decoder stricter for packets 
   parameter, not a container: it keeps its VALUE, is a preset member, and tells its listeners; its OSCQuery answer has both
   TYPE and CONTENTS. New: `Node::hasValue()`. Before, any node with listed children answered as a container.
 
+### Added
+- `Tree::check()`: what every application's tree must have, in one place. A parameter has its TYPE and ACCESS, a readable one its
+  VALUE, a numeric one its RANGE, a writable numeric one its DEFAULT_VALUE. There is no reset address: a client resets a
+  parameter by writing its DEFAULT_VALUE (`Tree::reset` does the same in the application). For an application's tests.
+- `oscQueryAttributes()`: every attribute of OSCQuery and whether pxs serves it. `CRITICAL`, `HTML` and `OVERLOADS` are declared
+  on `Node` (`critical`, `html`, `overloads`) and marked not served: implement each when an application needs it.
+
 ## 0.10.0
 
 ### Changed (breaking)
