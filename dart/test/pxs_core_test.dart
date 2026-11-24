@@ -195,6 +195,18 @@ void main() {
       tree.dispose();
     });
 
+    test('removing a path frees what it called back into, and the namespace can be made again', () {
+      final tree = PxsTree();
+      for (var round = 0; round < 3; round++) {
+        tree.addNode('/dev/a', 'f', get: () => [round.toDouble()], set: (v) => true);
+        tree.addAction('/dev/go', 'N', (_) => true);
+        expect(jsonDecode(tree.oscQueryAnswer('GET', '/dev/a?VALUE').body!)['VALUE'], [round.toDouble()]);
+        expect(tree.remove('/dev'), isTrue);
+        expect(tree.oscQueryAnswer('GET', '/dev/a').status, 404);
+      }
+      tree.dispose();
+    });
+
     test('a text with its keys, and a string that is read back', () {
       var key = 'add';
       final tree = PxsTree();

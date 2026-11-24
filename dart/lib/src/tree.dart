@@ -40,6 +40,17 @@ class PxsTree {
   ffi.NativeCallable<pxs_output_fnFunction>? _output;
   final List<ffi.NativeCallable<dynamic>> _callables = [];
   final List<ffi.Pointer<ffi.Uint8>> _held = [];
+  // What each path made to call back into Dart, so that removing a path (a rebuilt namespace) frees it
+  final Map<String, List<ffi.NativeCallable<dynamic>>> _byPath = {};
+  final Map<String, List<ffi.Pointer<ffi.Uint8>>> _heldByPath = {};
+
+  void _own(String path, Iterable<ffi.NativeCallable<dynamic>?> callables, [List<ffi.Pointer<ffi.Uint8>>? held]) {
+    final list = _byPath.putIfAbsent(path, () => []);
+    for (final c in callables) {
+      if (c != null) list.add(c);
+    }
+    if (held != null) _heldByPath[path] = held;
+  }
 
   PxsBindings get _b => Pxs.bindings;
 
@@ -108,6 +119,7 @@ class PxsTree {
       }, exceptionalReturn: 1);
       _callables.add(setter);
     }
+    _own(path, [getter, setter]);
     using((arena) {
       final keys = arena<ffi.Pointer<ffi.Char>>(choices.isEmpty ? 1 : choices.length);
       for (var i = 0; i < choices.length; i++) {
@@ -201,6 +213,7 @@ class PxsTree {
       );
       _callables.add(setter);
     }
+    _own(path, [getter, setter], held);
     using((arena) {
       final spec = arena<pxs_node>();
       final r = spec.ref;
@@ -267,6 +280,7 @@ class PxsTree {
       exceptionalReturn: 1,
     );
     _callables.add(callable);
+    _own(path, [callable]);
     using((arena) {
       _check(_b.pxs_tree_add_action(_tree, path.toNativeUtf8(allocator: arena).cast(), types.toNativeUtf8(allocator: arena).cast(), callable.nativeFunction, ffi.nullptr),
           'cannot add the action $path');
@@ -284,7 +298,22 @@ class PxsTree {
   /// True when there was a node at [path].
   bool remove(String path) {
     _alive();
-    return using((arena) => _b.pxs_tree_remove(_tree, path.toNativeUtf8(allocator: arena).cast()) == 0);
+    final removed = using((arena) => _b.pxs_tree_remove(_tree, path.toNativeUtf8(allocator: arena).cast()) == 0);
+    if (removed) {
+      // what the removed nodes called back into is freed with them (a namespace that is rebuilt does not grow)
+      final prefix = path.endsWith('/') ? path : '$path/';
+      for (final key in _byPath.keys.where((k) => k == path || k.startsWith(prefix)).toList()) {
+        for (final c in _byPath.remove(key)!) {
+          c.close();
+          _callables.remove(c);
+        }
+        for (final p in _heldByPath.remove(key) ?? const <ffi.Pointer<ffi.Uint8>>[]) {
+          malloc.free(p);
+          _held.remove(p);
+        }
+      }
+    }
+    return removed;
   }
 
   /// Where everything the tree says goes (the feedback of a parameter, a signal fired): OSC packets to send. null: nothing is told.
