@@ -5,6 +5,8 @@
 
 #include "check.h"
 
+#include <algorithm>
+
 using namespace pxs::core;
 using namespace pxs::core::tree;
 
