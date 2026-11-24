@@ -17,6 +17,8 @@ decoder accepts is breaking unless it only makes a decoder stricter for packets 
   argument, and `DEFAULT_VALUE` as the reset (nothing is guessed from `VALUE`). Written once for the Qt applications and the Flutter ones; no sockets in it.
 - **C interface and Dart**: `pxs_remote_*` (`new`, `free`, `load`, `set_value`, `node`, `signature`, `leaves`) and `PxsRemoteNode` / `PxsRemoteParam` / `PxsRemoteTree` in the Dart package: the client tree
   for the Flutter applications, with the same rule. The C interface grows by adding (`PXS_C_API_VERSION` stays 1); `bindings.g.dart` is regenerated.
+- **`pxs_tree_add_node`** and `PxsTree.addNode`: a node declared by hand, of any arguments (a point `ff`, a colour `fff`, a text with its keys), with a range per argument, a default,
+  a unit, and the way to read and write its values; it may hold other nodes. The C interface grows by adding.
 - `Tree::check()`: what every application's tree must have, in one place. A parameter has its TYPE and ACCESS, a readable one its
   VALUE, a numeric one its RANGE, a writable numeric one its DEFAULT_VALUE. There is no reset address: a client resets a
   parameter by writing its DEFAULT_VALUE (`Tree::reset` does the same in the application). For an application's tests.

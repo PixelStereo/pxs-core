@@ -111,6 +111,30 @@ typedef void (*pxs_output_fn)(void *user, const uint8_t *packet, size_t size);
  * keys (lower case) in `choices`; the others ignore both. `get` and `set` may be NULL for a parameter that is only written or only read. */
 PXS_API int pxs_tree_add_parameter(pxs_tree *tree, const char *path, const char *label, int type, double min, double max, const char *const *choices,
                                    size_t choice_count, pxs_get_fn get, pxs_set_fn set, void *user);
+/* A node declared by hand, of any arguments: a point ("ff"), a colour ("fff"), a text with its keys, with a range per argument, a default, and the
+ * way to read and write its values. `get` fills up to `capacity` values and says how many in `*count` (a string a value points to stays valid
+ * until the next call of `get` or `set` of this node); `set` takes the values written (one per argument) and returns 0 when it took them. A
+ * node with a value may hold other nodes (add them at their own paths). */
+typedef int (*pxs_values_get_fn)(void *user, pxs_value *out, size_t capacity, size_t *count);
+typedef int (*pxs_values_set_fn)(void *user, const pxs_value *in, size_t count);
+typedef struct pxs_node {
+    const char *path;         /* "/kadran/controls/1/pad" */
+    const char *types;        /* OSC type tags: "f", "ff", "fff", "s", "T"… */
+    int32_t access;           /* 1 read, 2 write, 3 both */
+    const char *description;  /* may be NULL */
+    const char *unit;         /* OSCQuery UNIT of every argument ("distance.m"), or NULL */
+    const double *min;        /* the range of each argument: `range_count` entries (one per argument); NULL: none */
+    const double *max;
+    size_t range_count;
+    const char *const *vals;  /* the keys a text node takes (RANGE VALS), or NULL */
+    size_t vals_count;
+    const pxs_value *defaults; /* DEFAULT_VALUE, one per argument, or NULL: a reset writes these */
+    size_t defaults_count;
+    pxs_values_get_fn get;    /* NULL: not readable */
+    pxs_values_set_fn set;    /* NULL: not writable */
+    void *user;
+} pxs_node;
+PXS_API int pxs_tree_add_node(pxs_tree *tree, const pxs_node *node);
 /* An action at `path` ("N": no argument), or a signal the application emits. `types` are OSC type tags. */
 PXS_API int pxs_tree_add_action(pxs_tree *tree, const char *path, const char *types, pxs_action_fn action, void *user);
 PXS_API int pxs_tree_add_signal(pxs_tree *tree, const char *path, const char *types);

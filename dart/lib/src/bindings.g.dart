@@ -582,6 +582,22 @@ class PxsBindings {
         )
       >();
 
+  int pxs_tree_add_node(
+    ffi.Pointer<pxs_tree> tree,
+    ffi.Pointer<pxs_node> node,
+  ) {
+    return _pxs_tree_add_node(tree, node);
+  }
+
+  late final _pxs_tree_add_nodePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pxs_tree>, ffi.Pointer<pxs_node>)
+        >
+      >('pxs_tree_add_node');
+  late final _pxs_tree_add_node = _pxs_tree_add_nodePtr
+      .asFunction<int Function(ffi.Pointer<pxs_tree>, ffi.Pointer<pxs_node>)>();
+
   /// A parameter at `path` ("/layer/1/opacity"). FLOAT and INT take min and max (the range shown and the limits); CHOICE takes its
   /// keys (lower case) in `choices`; the others ignore both. `get` and `set` may be NULL for a parameter that is only written or only read.
   int pxs_tree_add_parameter(
@@ -979,6 +995,86 @@ final class pxs_midi_message extends ffi.Struct {
     ..ref.value = value;
 }
 
+final class pxs_node extends ffi.Struct {
+  /// "/kadran/controls/1/pad"
+  external ffi.Pointer<ffi.Char> path;
+
+  /// OSC type tags: "f", "ff", "fff", "s", "T"…
+  external ffi.Pointer<ffi.Char> types;
+
+  /// 1 read, 2 write, 3 both
+  @ffi.Int32()
+  external int access;
+
+  /// may be NULL
+  external ffi.Pointer<ffi.Char> description;
+
+  /// OSCQuery UNIT of every argument ("distance.m"), or NULL
+  external ffi.Pointer<ffi.Char> unit;
+
+  /// the range of each argument: `range_count` entries (one per argument); NULL: none
+  external ffi.Pointer<ffi.Double> min;
+
+  external ffi.Pointer<ffi.Double> max;
+
+  @ffi.Size()
+  external int range_count;
+
+  /// the keys a text node takes (RANGE VALS), or NULL
+  external ffi.Pointer<ffi.Pointer<ffi.Char>> vals;
+
+  @ffi.Size()
+  external int vals_count;
+
+  /// DEFAULT_VALUE, one per argument, or NULL: a reset writes these
+  external ffi.Pointer<pxs_value> defaults;
+
+  @ffi.Size()
+  external int defaults_count;
+
+  /// NULL: not readable
+  external pxs_values_get_fn get;
+
+  /// NULL: not writable
+  external pxs_values_set_fn set;
+
+  external ffi.Pointer<ffi.Void> user;
+
+  static ffi.Pointer<pxs_node> $allocate(
+    ffi.Allocator $allocator, {
+    required ffi.Pointer<ffi.Char> path,
+    required ffi.Pointer<ffi.Char> types,
+    required int access,
+    required ffi.Pointer<ffi.Char> description,
+    required ffi.Pointer<ffi.Char> unit,
+    required ffi.Pointer<ffi.Double> min,
+    required ffi.Pointer<ffi.Double> max,
+    required int range_count,
+    required ffi.Pointer<ffi.Pointer<ffi.Char>> vals,
+    required int vals_count,
+    required ffi.Pointer<pxs_value> defaults,
+    required int defaults_count,
+    required pxs_values_get_fn get,
+    required pxs_values_set_fn set,
+    required ffi.Pointer<ffi.Void> user,
+  }) => $allocator<pxs_node>()
+    ..ref.path = path
+    ..ref.types = types
+    ..ref.access = access
+    ..ref.description = description
+    ..ref.unit = unit
+    ..ref.min = min
+    ..ref.max = max
+    ..ref.range_count = range_count
+    ..ref.vals = vals
+    ..ref.vals_count = vals_count
+    ..ref.defaults = defaults
+    ..ref.defaults_count = defaults_count
+    ..ref.get = get
+    ..ref.set = set
+    ..ref.user = user;
+}
+
 /// ---- OSC ----------------------------------------------------------------------------------------------------------------------
 final class pxs_osc_packet extends ffi.Opaque {}
 
@@ -1090,3 +1186,38 @@ final class pxs_value extends ffi.Struct {
   @ffi.Size()
   external int size;
 }
+
+/// A node declared by hand, of any arguments: a point ("ff"), a colour ("fff"), a text with its keys, with a range per argument, a default, and the
+/// way to read and write its values. `get` fills up to `capacity` values and says how many in `*count` (a string a value points to stays valid
+/// until the next call of `get` or `set` of this node); `set` takes the values written (one per argument) and returns 0 when it took them. A
+/// node with a value may hold other nodes (add them at their own paths).
+typedef pxs_values_get_fn =
+    ffi.Pointer<ffi.NativeFunction<pxs_values_get_fnFunction>>;
+typedef pxs_values_get_fnFunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Void> user,
+      ffi.Pointer<pxs_value> out,
+      ffi.Size capacity,
+      ffi.Pointer<ffi.Size> count,
+    );
+typedef Dartpxs_values_get_fnFunction =
+    int Function(
+      ffi.Pointer<ffi.Void> user,
+      ffi.Pointer<pxs_value> out,
+      int capacity,
+      ffi.Pointer<ffi.Size> count,
+    );
+typedef pxs_values_set_fn =
+    ffi.Pointer<ffi.NativeFunction<pxs_values_set_fnFunction>>;
+typedef pxs_values_set_fnFunction =
+    ffi.Int Function(
+      ffi.Pointer<ffi.Void> user,
+      ffi.Pointer<pxs_value> in$,
+      ffi.Size count,
+    );
+typedef Dartpxs_values_set_fnFunction =
+    int Function(
+      ffi.Pointer<ffi.Void> user,
+      ffi.Pointer<pxs_value> in$,
+      int count,
+    );

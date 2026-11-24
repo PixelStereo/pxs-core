@@ -261,6 +261,62 @@ int pxs_tree_add_parameter(pxs_tree *t, const char *path, const char *label, int
     })
 }
 
+int pxs_tree_add_node(pxs_tree *t, const pxs_node *spec)
+{
+    if (!t || !spec || !spec->path || !spec->types) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        const std::string type = spec->types;
+        std::size_t arguments = 0;
+        for (char c : type)
+            if (c != '[' && c != ']') ++arguments;
+        tree::Node &n = t->tree.add(spec->path);
+        n.type = type;
+        n.access = spec->access;
+        n.description = text(spec->description);
+        if (spec->unit) n.unit.assign(std::max<std::size_t>(1, arguments), text(spec->unit));
+        for (std::size_t i = 0; spec->min && spec->max && i < spec->range_count; ++i) {
+            tree::ArgRange r;
+            r.min = core::Value(spec->min[i]);
+            r.max = core::Value(spec->max[i]);
+            n.range.push_back(r);
+        }
+        if (spec->vals && spec->vals_count) {
+            tree::ArgRange r;
+            for (std::size_t i = 0; i < spec->vals_count; ++i) r.vals.emplace_back(text(spec->vals[i]));
+            n.range.push_back(r);
+        }
+        if (!n.range.empty() && spec->min) n.clip = "both";
+        if (spec->defaults && spec->defaults_count) {
+            core::ValueList d;
+            for (std::size_t i = 0; i < spec->defaults_count; ++i) d.push_back(fromC(spec->defaults[i]));
+            n.defaultValue = [d] { return d; };
+        }
+        const pxs_values_get_fn get = spec->get;
+        const pxs_values_set_fn set = spec->set;
+        void *const user = spec->user;
+        const std::size_t capacity = std::max<std::size_t>(1, arguments);
+        if (get && (spec->access & 1)) {
+            n.get = [get, user, capacity]() -> core::ValueList {
+                std::vector<pxs_value> buf(capacity);
+                for (pxs_value &v : buf) std::memset(&v, 0, sizeof v);
+                std::size_t count = 0;
+                if (get(user, buf.data(), capacity, &count) != 0) return {};
+                core::ValueList out;
+                for (std::size_t i = 0; i < count && i < capacity; ++i) out.push_back(fromC(buf[i]));
+                return out;
+            };
+        }
+        if (set && (spec->access & 2)) {
+            n.set = [set, user](const core::ValueList &values) {
+                std::vector<pxs_value> buf(values.size());
+                for (std::size_t i = 0; i < values.size(); ++i) toC(values[i], buf[i]);
+                return set(user, buf.empty() ? nullptr : buf.data(), buf.size()) == 0;
+            };
+        }
+        return PXS_OK;
+    })
+}
+
 int pxs_tree_add_action(pxs_tree *t, const char *path, const char *types, pxs_action_fn action, void *user)
 {
     if (!t || !path || !action) return PXS_ERR_ARGUMENT;

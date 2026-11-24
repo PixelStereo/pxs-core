@@ -165,6 +165,50 @@ void main() {
     tree.dispose();
   });
 
+  group('a node of several arguments', () {
+    test('a point is read and written as a whole, with its range and default, and holds its components', () {
+      var x = 0.5, y = 0.25;
+      final tree = PxsTree();
+      tree.addNode('/pad/xy', 'ff',
+          description: 'A point',
+          min: [0, 0],
+          max: [1, 1],
+          defaults: [0.5, 0.5],
+          get: () => [x, y],
+          set: (v) {
+            x = (v[0] as num).toDouble();
+            y = (v[1] as num).toDouble();
+            return true;
+          });
+      tree.addNode('/pad/xy/x', 'f', access: 1, get: () => [x]);
+      final answer = tree.oscQueryAnswer('GET', '/pad/xy');
+      expect(answer.status, 200);
+      final node = jsonDecode(answer.body!) as Map<String, dynamic>;
+      expect(node['TYPE'], 'ff');
+      expect(node['VALUE'], [0.5, 0.25]);
+      expect(node['DEFAULT_VALUE'], [0.5, 0.5]);
+      expect(node['RANGE'], hasLength(2));
+      expect((node['CONTENTS'] as Map).keys, ['x']); // a value that holds a node
+      tree.applyPacket(Osc.encode('/pad/xy', 'ff', [0.9, 0.1]));
+      expect(x, closeTo(0.9, 1e-6));
+      expect(y, closeTo(0.1, 1e-6));
+      tree.dispose();
+    });
+
+    test('a text with its keys, and a string that is read back', () {
+      var key = 'add';
+      final tree = PxsTree();
+      tree.addNode('/blend', 's', vals: ['normal', 'add'], get: () => [key], set: (v) {
+        key = '${v[0]}';
+        return true;
+      });
+      final node = jsonDecode(tree.oscQueryAnswer('GET', '/blend').body!) as Map<String, dynamic>;
+      expect(node['VALUE'], ['add']);
+      expect((node['RANGE'] as List).first['VALS'], ['normal', 'add']);
+      tree.dispose();
+    });
+  });
+
   group('the other side: a device\'s tree', () {
     const device = '{"FULL_PATH":"/","ACCESS":0,"CONTENTS":{"color":{"FULL_PATH":"/color","ACCESS":0,"CONTENTS":{'
         '"tint":{"FULL_PATH":"/color/tint","TYPE":"f","ACCESS":3,"VALUE":[0.25],"DEFAULT_VALUE":[0.0],"RANGE":[{"MIN":-100,"MAX":100}],'
