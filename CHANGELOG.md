@@ -3,7 +3,7 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
-## Unreleased
+## 0.11.0
 
 ### Changed (breaking)
 - **A value can hold nodes.** `Node::isContainer()` is now "has no value of its own" (no type and no access), and `kind()` follows
