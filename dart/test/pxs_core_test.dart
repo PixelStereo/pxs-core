@@ -165,6 +165,53 @@ void main() {
     tree.dispose();
   });
 
+  group('the other side: a device\'s tree', () {
+    const device = '{"FULL_PATH":"/","ACCESS":0,"CONTENTS":{"color":{"FULL_PATH":"/color","ACCESS":0,"CONTENTS":{'
+        '"tint":{"FULL_PATH":"/color/tint","TYPE":"f","ACCESS":3,"VALUE":[0.25],"DEFAULT_VALUE":[0.0],"RANGE":[{"MIN":-100,"MAX":100}],'
+        '"CONTENTS":{"enable":{"FULL_PATH":"/color/tint/enable","TYPE":"T","ACCESS":3,"VALUE":[true]}}}}},'
+        '"blend":{"FULL_PATH":"/blend","TYPE":"s","ACCESS":3,"VALUE":["add"],"RANGE":[{"VALS":["normal","add"]}]},'
+        '"go":{"FULL_PATH":"/go","TYPE":"N","ACCESS":2}}}';
+
+    test('a value that holds a node is a parameter, and a container only holds', () {
+      final tree = PxsRemoteTree();
+      expect(tree.load('not json'), isFalse);
+      expect(tree.load(device), isTrue);
+      final tint = tree.node('/color/tint')!;
+      expect(tint.hasValue, isTrue);
+      expect(tint.isContainer, isFalse);
+      expect(tint.children, ['enable']);
+      expect(tint.value, [0.25]);
+      expect(tint.param!.type, 'float');
+      expect(tint.param!.min, -100);
+      expect(tint.param!.defaultValue, [0.0].first);
+      expect(tree.node('/color')!.isContainer, isTrue);
+      expect(tree.node('/nothing'), isNull);
+      tree.dispose();
+    });
+
+    test('choices, actions, and no reset without a DEFAULT_VALUE', () {
+      final tree = PxsRemoteTree()..load(device);
+      final blend = tree.node('/blend')!.param!;
+      expect(blend.type, 'choice');
+      expect(blend.choices, ['normal', 'add']);
+      expect(blend.defaultValue, isNull);
+      expect(tree.node('/go')!.kind, 'action');
+      expect(tree.node('/go')!.param!.type, 'trigger');
+      tree.dispose();
+    });
+
+    test('values are followed, and the signature is of what the tree is made of', () {
+      final tree = PxsRemoteTree()..load(device);
+      final before = tree.signature();
+      expect(tree.setValue('/color/tint', [0.75]), isTrue);
+      expect(tree.node('/color/tint')!.value, [0.75]);
+      expect(tree.setValue('/nothing', [1]), isFalse);
+      expect(tree.signature(), before);
+      expect(tree.leaves(), ['/blend', '/color/tint', '/color/tint/enable', '/go']);
+      tree.dispose();
+    });
+  });
+
   group('DMX', () {
     test('an sACN frame goes round', () {
       final frame = DmxFrame(sacn: true, universe: 7, priority: 100, sequence: 9, name: 'Pixel Stereo', values: Uint8List.fromList(List.generate(512, (i) => i & 255)));

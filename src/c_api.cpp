@@ -6,6 +6,7 @@
 #include <pxs/core/tree/oscquery_server.h>
 #include <pxs/core/tree/osc_bridge.h>
 #include <pxs/core/tree/preset.h>
+#include <pxs/core/tree/remote.h>
 #include <pxs/core/tree/tree.h>
 #include <pxs/core/version.h>
 #include <pxs/core/websocket/frame.h>
@@ -31,6 +32,10 @@ namespace tree = pxs::core::tree;
 
 struct pxs_osc_packet {
     std::vector<core::osc::Message> messages;
+};
+
+struct pxs_remote {
+    tree::RemoteTree tree;
 };
 
 struct pxs_tree {
@@ -365,6 +370,78 @@ char *pxs_preset_capture(const pxs_tree *t, const char *name)
         tree::Preset p = tree::capture(t->tree);
         p.name = text(name);
         return duplicate(p.toJson());
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+pxs_remote *pxs_remote_new(void)
+{
+    try {
+        return new pxs_remote;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void pxs_remote_free(pxs_remote *r)
+{
+    delete r;
+}
+
+int pxs_remote_load(pxs_remote *r, const char *json)
+{
+    if (!r || !json) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, return r->tree.load(json) ? PXS_OK : PXS_ERR_MALFORMED;)
+}
+
+int pxs_remote_set_value(pxs_remote *r, const char *path, const char *value_json)
+{
+    if (!r || !path || !value_json) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        if (!r->tree.find(path)) return PXS_ERR_NOT_FOUND;
+        return r->tree.setValueJson(path, value_json) ? PXS_OK : PXS_ERR_MALFORMED;
+    })
+}
+
+char *pxs_remote_node(const pxs_remote *r, const char *path)
+{
+    if (!r || !path) return nullptr;
+    try {
+        if (!r->tree.find(path)) return nullptr;
+        return duplicate(tree::remoteNodeJson(r->tree, path));
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+char *pxs_remote_signature(const pxs_remote *r)
+{
+    if (!r) return nullptr;
+    try {
+        return duplicate(r->tree.signature());
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+char *pxs_remote_leaves(const pxs_remote *r)
+{
+    if (!r) return nullptr;
+    try {
+        std::string out = "[";
+        bool first = true;
+        for (const std::string &p : r->tree.leaves()) {
+            if (!first) out += ',';
+            first = false;
+            out += '"';
+            for (char c : p) {
+                if (c == '"' || c == '\\') out += '\\';
+                out += c;
+            }
+            out += '"';
+        }
+        return duplicate(out + "]");
     } catch (...) {
         return nullptr;
     }

@@ -133,6 +133,28 @@ PXS_API char *pxs_oscquery_answer(const pxs_tree *tree, const char *name, int os
 PXS_API char *pxs_preset_capture(const pxs_tree *tree, const char *name);
 PXS_API int pxs_preset_recall(pxs_tree *tree, const char *json);
 
+/* ---- the other side: a device's tree, as a client reads it -------------------------------------------------------------------- */
+
+/* What an OSCQuery device answers to GET /, kept as a tree to browse and read. The sockets are the caller's (HTTP, WebSocket LISTEN, UDP): this
+ * says what the answer and the values mean, with the same rule as the server's: a node with a TYPE or an ACCESS has a value, whether it holds
+ * other nodes or not; one with neither is only a container. A reset is writing the node's DEFAULT_VALUE. */
+typedef struct pxs_remote pxs_remote;
+
+PXS_API pxs_remote *pxs_remote_new(void);
+PXS_API void pxs_remote_free(pxs_remote *remote);
+/* Replaces everything with an answer to GET / (JSON text). PXS_OK, or PXS_ERR_MALFORMED when it is not a node. */
+PXS_API int pxs_remote_load(pxs_remote *remote, const char *json);
+/* A value the device told (LISTEN, ?VALUE): `value_json` is the JSON array, one entry per argument. PXS_OK, PXS_ERR_NOT_FOUND or PXS_ERR_MALFORMED. */
+PXS_API int pxs_remote_set_value(pxs_remote *remote, const char *path, const char *value_json);
+/* One node as JSON (free it): path, name, type (OSC type tags), access, kind ("action", "signal" or ""), description, hasValue, container,
+ * children (their names), value and default (arrays), and for a node of one argument "param": type (float, int, bool, choice, text, trigger),
+ * label, access, min, max, lo, hi, step, unbounded, signal, action, unit, extendedType, choices, default. NULL when there is no such node. */
+PXS_API char *pxs_remote_node(const pxs_remote *remote, const char *path);
+/* What the tree is made of, not its values (free it): two trees with the same signature show the same. */
+PXS_API char *pxs_remote_signature(const pxs_remote *remote);
+/* The addresses of every node that has a value, in order, as a JSON array (free it). */
+PXS_API char *pxs_remote_leaves(const pxs_remote *remote);
+
 /* ---- DMX over the network (Art-Net, sACN) ------------------------------------------------------------------------------------- */
 
 typedef struct pxs_dmx_frame {

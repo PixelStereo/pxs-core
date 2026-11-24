@@ -412,6 +412,130 @@ class PxsBindings {
   late final _pxs_preset_recall = _pxs_preset_recallPtr
       .asFunction<int Function(ffi.Pointer<pxs_tree>, ffi.Pointer<ffi.Char>)>();
 
+  void pxs_remote_free(ffi.Pointer<pxs_remote> remote) {
+    return _pxs_remote_free(remote);
+  }
+
+  late final _pxs_remote_freePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_remote>)>>(
+        'pxs_remote_free',
+      );
+  late final _pxs_remote_free = _pxs_remote_freePtr
+      .asFunction<void Function(ffi.Pointer<pxs_remote>)>();
+
+  /// The addresses of every node that has a value, in order, as a JSON array (free it).
+  ffi.Pointer<ffi.Char> pxs_remote_leaves(ffi.Pointer<pxs_remote> remote) {
+    return _pxs_remote_leaves(remote);
+  }
+
+  late final _pxs_remote_leavesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(ffi.Pointer<pxs_remote>)
+        >
+      >('pxs_remote_leaves');
+  late final _pxs_remote_leaves = _pxs_remote_leavesPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<pxs_remote>)>();
+
+  /// Replaces everything with an answer to GET / (JSON text). PXS_OK, or PXS_ERR_MALFORMED when it is not a node.
+  int pxs_remote_load(
+    ffi.Pointer<pxs_remote> remote,
+    ffi.Pointer<ffi.Char> json,
+  ) {
+    return _pxs_remote_load(remote, json);
+  }
+
+  late final _pxs_remote_loadPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<pxs_remote>, ffi.Pointer<ffi.Char>)
+        >
+      >('pxs_remote_load');
+  late final _pxs_remote_load = _pxs_remote_loadPtr
+      .asFunction<
+        int Function(ffi.Pointer<pxs_remote>, ffi.Pointer<ffi.Char>)
+      >();
+
+  ffi.Pointer<pxs_remote> pxs_remote_new() {
+    return _pxs_remote_new();
+  }
+
+  late final _pxs_remote_newPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<pxs_remote> Function()>>(
+        'pxs_remote_new',
+      );
+  late final _pxs_remote_new = _pxs_remote_newPtr
+      .asFunction<ffi.Pointer<pxs_remote> Function()>();
+
+  /// One node as JSON (free it): path, name, type (OSC type tags), access, kind ("action", "signal" or ""), description, hasValue, container,
+  /// children (their names), value and default (arrays), and for a node of one argument "param": type (float, int, bool, choice, text, trigger),
+  /// label, access, min, max, lo, hi, step, unbounded, signal, action, unit, extendedType, choices, default. NULL when there is no such node.
+  ffi.Pointer<ffi.Char> pxs_remote_node(
+    ffi.Pointer<pxs_remote> remote,
+    ffi.Pointer<ffi.Char> path,
+  ) {
+    return _pxs_remote_node(remote, path);
+  }
+
+  late final _pxs_remote_nodePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(
+            ffi.Pointer<pxs_remote>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('pxs_remote_node');
+  late final _pxs_remote_node = _pxs_remote_nodePtr
+      .asFunction<
+        ffi.Pointer<ffi.Char> Function(
+          ffi.Pointer<pxs_remote>,
+          ffi.Pointer<ffi.Char>,
+        )
+      >();
+
+  /// A value the device told (LISTEN, ?VALUE): `value_json` is the JSON array, one entry per argument. PXS_OK, PXS_ERR_NOT_FOUND or PXS_ERR_MALFORMED.
+  int pxs_remote_set_value(
+    ffi.Pointer<pxs_remote> remote,
+    ffi.Pointer<ffi.Char> path,
+    ffi.Pointer<ffi.Char> value_json,
+  ) {
+    return _pxs_remote_set_value(remote, path, value_json);
+  }
+
+  late final _pxs_remote_set_valuePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_remote>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('pxs_remote_set_value');
+  late final _pxs_remote_set_value = _pxs_remote_set_valuePtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<pxs_remote>,
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>,
+        )
+      >();
+
+  /// What the tree is made of, not its values (free it): two trees with the same signature show the same.
+  ffi.Pointer<ffi.Char> pxs_remote_signature(ffi.Pointer<pxs_remote> remote) {
+    return _pxs_remote_signature(remote);
+  }
+
+  late final _pxs_remote_signaturePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Char> Function(ffi.Pointer<pxs_remote>)
+        >
+      >('pxs_remote_signature');
+  late final _pxs_remote_signature = _pxs_remote_signaturePtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<pxs_remote>)>();
+
   /// An action at `path` ("N": no argument), or a signal the application emits. `types` are OSC type tags.
   int pxs_tree_add_action(
     ffi.Pointer<pxs_tree> tree,
@@ -882,6 +1006,11 @@ enum pxs_param_type {
     _ => throw ArgumentError('Unknown value for pxs_param_type: $value'),
   };
 }
+
+/// What an OSCQuery device answers to GET /, kept as a tree to browse and read. The sockets are the caller's (HTTP, WebSocket LISTEN, UDP): this
+/// says what the answer and the values mean, with the same rule as the server's: a node with a TYPE or an ACCESS has a value, whether it holds
+/// other nodes or not; one with neither is only a container. A reset is writing the node's DEFAULT_VALUE.
+final class pxs_remote extends ffi.Opaque {}
 
 typedef pxs_set_fn = ffi.Pointer<ffi.NativeFunction<pxs_set_fnFunction>>;
 typedef pxs_set_fnFunction =

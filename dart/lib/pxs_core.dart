@@ -14,4 +14,5 @@ library;
 export 'src/dmx_midi_websocket.dart';
 export 'src/native.dart' show Pxs, PxsException, Vec;
 export 'src/osc.dart';
+export 'src/remote.dart';
 export 'src/tree.dart';

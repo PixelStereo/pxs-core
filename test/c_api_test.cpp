@@ -233,6 +233,40 @@ void theAddressSpace()
     pxs_tree_free(nullptr);
 }
 
+void theOtherSide()
+{
+    pxs_remote *r = pxs_remote_new();
+    CHECK(r != nullptr);
+    CHECK_EQ(pxs_remote_load(r, "not json"), int(PXS_ERR_MALFORMED));
+    const char *device =
+        R"({"FULL_PATH":"/","ACCESS":0,"CONTENTS":{"color":{"FULL_PATH":"/color","ACCESS":0,"CONTENTS":{)"
+        R"("tint":{"FULL_PATH":"/color/tint","TYPE":"f","ACCESS":3,"VALUE":[0.25],"DEFAULT_VALUE":[0.0],"RANGE":[{"MIN":-100,"MAX":100}],)"
+        R"("CONTENTS":{"enable":{"FULL_PATH":"/color/tint/enable","TYPE":"T","ACCESS":3,"VALUE":[true]}}}}}}})";
+    CHECK_EQ(pxs_remote_load(r, device), int(PXS_OK));
+    char *tint = pxs_remote_node(r, "/color/tint");
+    CHECK(tint != nullptr);
+    const std::string json = tint ? tint : "";
+    pxs_free(tint);
+    CHECK(json.find("\"hasValue\":true") != std::string::npos);        // a value that holds a node is a parameter
+    CHECK(json.find("\"children\":[\"enable\"]") != std::string::npos);
+    CHECK(json.find("\"min\":-100") != std::string::npos && json.find("\"default\":0") != std::string::npos);
+    CHECK(pxs_remote_node(r, "/nothing") == nullptr);
+    CHECK_EQ(pxs_remote_set_value(r, "/color/tint", "[0.75]"), int(PXS_OK));
+    CHECK_EQ(pxs_remote_set_value(r, "/nothing", "[1]"), int(PXS_ERR_NOT_FOUND));
+    CHECK_EQ(pxs_remote_set_value(r, "/color/tint", "oops"), int(PXS_ERR_MALFORMED));
+    char *after = pxs_remote_node(r, "/color/tint");
+    CHECK(after && std::string(after).find("0.75") != std::string::npos);
+    pxs_free(after);
+    char *leaves = pxs_remote_leaves(r);
+    CHECK(leaves && std::string(leaves) == R"(["/color/tint","/color/tint/enable"])");
+    pxs_free(leaves);
+    char *sig = pxs_remote_signature(r);
+    CHECK(sig && std::string(sig).find("/color/tint|f|3") != std::string::npos);
+    pxs_free(sig);
+    pxs_remote_free(r);
+    pxs_remote_free(nullptr);
+}
+
 void dmx()
 {
     pxs_dmx_frame f;
@@ -297,6 +331,7 @@ int main()
     general();
     oscRoundTrip();
     theAddressSpace();
+    theOtherSide();
     dmx();
     midi();
     websocket();
