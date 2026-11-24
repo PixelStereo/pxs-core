@@ -381,9 +381,10 @@ void checkNode(const Node &n, std::vector<std::string> &out)
         if (n.type.empty()) out.push_back(at + ": a parameter without TYPE");
         if (n.access == 0) out.push_back(at + ": a parameter without ACCESS");
         if ((n.access & 1) && !n.get) out.push_back(at + ": readable but has no VALUE (no getter)");
-        if (numericTags(n.type)) {
+        // A node that is only written has no state: it is an action, and says nothing of a range or a default
+        if ((n.access & 1) && numericTags(n.type)) {
             if (n.range.empty()) out.push_back(at + ": numeric but has no RANGE");
-            if ((n.access & 2) && !n.defaultValue) out.push_back(at + ": numeric and writable but has no DEFAULT_VALUE");
+            if (n.access == 3 && !n.defaultValue) out.push_back(at + ": numeric, read and written, but has no DEFAULT_VALUE");
         }
     }
     for (const auto &c : n.children()) checkNode(*c.second, out);

@@ -164,7 +164,7 @@ public:
     void setLockedPaths(const std::vector<std::string> &paths);
     bool reset(const std::string &path) const; // false: no such node, locked, or nothing to reset (the reset is the DEFAULT_VALUE written)
     // What an application's tree must have, the same for every one (what a client counts on). Every node with a value says its TYPE and
-    // ACCESS; a readable parameter has its VALUE (a getter); a numeric parameter has its RANGE, and a writable one its DEFAULT_VALUE,
+    // ACCESS; a readable parameter has its VALUE (a getter); a readable numeric one has its RANGE, and one that is also written its DEFAULT_VALUE,
     // so that a client can reset it by writing that value (there is no reset address). The problems found, one line each, with the
     // address; empty when the tree is as it must be. For an application's tests.
     std::vector<std::string> check() const;
