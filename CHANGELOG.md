@@ -12,6 +12,9 @@ decoder accepts is breaking unless it only makes a decoder stricter for packets 
   TYPE and CONTENTS. New: `Node::hasValue()`. Before, any node with listed children answered as a container.
 
 ### Added
+- **The client side of the tree** (`pxs/core/tree/remote.h`: `RemoteTree`, `RemoteNode`, `remoteNodeJson`): what an OSCQuery device answers to `GET /`, read as a tree with the
+  same rule as the server's (a node with a type or an access has a value, whether it holds nodes or not), as `ParamInfo` for a node of one
+  argument, and `DEFAULT_VALUE` as the reset (nothing is guessed from `VALUE`). Written once for the Qt applications and the Flutter ones; no sockets in it.
 - `Tree::check()`: what every application's tree must have, in one place. A parameter has its TYPE and ACCESS, a readable one its
   VALUE, a numeric one its RANGE, a writable numeric one its DEFAULT_VALUE. There is no reset address: a client resets a
   parameter by writing its DEFAULT_VALUE (`Tree::reset` does the same in the application). For an application's tests.
