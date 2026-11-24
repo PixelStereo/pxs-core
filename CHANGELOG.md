@@ -3,6 +3,28 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.11.0
+
+### Changed (breaking)
+- **A value can hold nodes.** `Node::isContainer()` is now "has no value of its own" (no type and no access), and `kind()` follows
+  it. A node with a type that also holds listed children (`/layer/1/color/tint` and `/layer/1/color/tint/enable`) is a
+  parameter, not a container: it keeps its VALUE, is a preset member, and tells its listeners; its OSCQuery answer has both
+  TYPE and CONTENTS. New: `Node::hasValue()`. Before, any node with listed children answered as a container.
+
+### Added
+- **The client side of the tree** (`pxs/core/tree/remote.h`: `RemoteTree`, `RemoteNode`, `remoteNodeJson`): what an OSCQuery device answers to `GET /`, read as a tree with the
+  same rule as the server's (a node with a type or an access has a value, whether it holds nodes or not), as `ParamInfo` for a node of one
+  argument, and `DEFAULT_VALUE` as the reset (nothing is guessed from `VALUE`). Written once for the Qt applications and the Flutter ones; no sockets in it.
+- **C interface and Dart**: `pxs_remote_*` (`new`, `free`, `load`, `set_value`, `node`, `signature`, `leaves`) and `PxsRemoteNode` / `PxsRemoteParam` / `PxsRemoteTree` in the Dart package: the client tree
+  for the Flutter applications, with the same rule. The C interface grows by adding (`PXS_C_API_VERSION` stays 1); `bindings.g.dart` is regenerated.
+- **`pxs_tree_add_node`** and `PxsTree.addNode`: a node declared by hand, of any arguments (a point `ff`, a colour `fff`, a text with its keys), with a range per argument, a default,
+  a unit, and the way to read and write its values; it may hold other nodes. The C interface grows by adding.
+- `Tree::check()`: what every application's tree must have, in one place. A parameter has its TYPE and ACCESS, a readable one its
+  VALUE, a numeric one its RANGE, a writable numeric one its DEFAULT_VALUE. There is no reset address: a client resets a
+  parameter by writing its DEFAULT_VALUE (`Tree::reset` does the same in the application). For an application's tests.
+- `oscQueryAttributes()`: every attribute of OSCQuery and whether pxs serves it. `CRITICAL`, `HTML` and `OVERLOADS` are declared
+  on `Node` (`critical`, `html`, `overloads`) and marked not served: implement each when an application needs it.
+
 ## 0.10.0
 
 ### Changed (breaking)

@@ -6,6 +6,7 @@
 #include <pxs/core/tree/oscquery_server.h>
 #include <pxs/core/tree/osc_bridge.h>
 #include <pxs/core/tree/preset.h>
+#include <pxs/core/tree/remote.h>
 #include <pxs/core/tree/tree.h>
 #include <pxs/core/version.h>
 #include <pxs/core/websocket/frame.h>
@@ -31,6 +32,10 @@ namespace tree = pxs::core::tree;
 
 struct pxs_osc_packet {
     std::vector<core::osc::Message> messages;
+};
+
+struct pxs_remote {
+    tree::RemoteTree tree;
 };
 
 struct pxs_tree {
@@ -256,6 +261,62 @@ int pxs_tree_add_parameter(pxs_tree *t, const char *path, const char *label, int
     })
 }
 
+int pxs_tree_add_node(pxs_tree *t, const pxs_node *spec)
+{
+    if (!t || !spec || !spec->path || !spec->types) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        const std::string type = spec->types;
+        std::size_t arguments = 0;
+        for (char c : type)
+            if (c != '[' && c != ']') ++arguments;
+        tree::Node &n = t->tree.add(spec->path);
+        n.type = type;
+        n.access = spec->access;
+        n.description = text(spec->description);
+        if (spec->unit) n.unit.assign(std::max<std::size_t>(1, arguments), text(spec->unit));
+        for (std::size_t i = 0; spec->min && spec->max && i < spec->range_count; ++i) {
+            tree::ArgRange r;
+            r.min = core::Value(spec->min[i]);
+            r.max = core::Value(spec->max[i]);
+            n.range.push_back(r);
+        }
+        if (spec->vals && spec->vals_count) {
+            tree::ArgRange r;
+            for (std::size_t i = 0; i < spec->vals_count; ++i) r.vals.emplace_back(text(spec->vals[i]));
+            n.range.push_back(r);
+        }
+        if (!n.range.empty() && spec->min) n.clip = "both";
+        if (spec->defaults && spec->defaults_count) {
+            core::ValueList d;
+            for (std::size_t i = 0; i < spec->defaults_count; ++i) d.push_back(fromC(spec->defaults[i]));
+            n.defaultValue = [d] { return d; };
+        }
+        const pxs_values_get_fn get = spec->get;
+        const pxs_values_set_fn set = spec->set;
+        void *const user = spec->user;
+        const std::size_t capacity = std::max<std::size_t>(1, arguments);
+        if (get && (spec->access & 1)) {
+            n.get = [get, user, capacity]() -> core::ValueList {
+                std::vector<pxs_value> buf(capacity);
+                for (pxs_value &v : buf) std::memset(&v, 0, sizeof v);
+                std::size_t count = 0;
+                if (get(user, buf.data(), capacity, &count) != 0) return {};
+                core::ValueList out;
+                for (std::size_t i = 0; i < count && i < capacity; ++i) out.push_back(fromC(buf[i]));
+                return out;
+            };
+        }
+        if (set && (spec->access & 2)) {
+            n.set = [set, user](const core::ValueList &values) {
+                std::vector<pxs_value> buf(values.size());
+                for (std::size_t i = 0; i < values.size(); ++i) toC(values[i], buf[i]);
+                return set(user, buf.empty() ? nullptr : buf.data(), buf.size()) == 0;
+            };
+        }
+        return PXS_OK;
+    })
+}
+
 int pxs_tree_add_action(pxs_tree *t, const char *path, const char *types, pxs_action_fn action, void *user)
 {
     if (!t || !path || !action) return PXS_ERR_ARGUMENT;
@@ -365,6 +426,83 @@ char *pxs_preset_capture(const pxs_tree *t, const char *name)
         tree::Preset p = tree::capture(t->tree);
         p.name = text(name);
         return duplicate(p.toJson());
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+pxs_remote *pxs_remote_new(void)
+{
+    try {
+        return new pxs_remote;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void pxs_remote_free(pxs_remote *r)
+{
+    delete r;
+}
+
+int pxs_remote_load(pxs_remote *r, const char *json)
+{
+    if (!r || !json) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, return r->tree.load(json) ? PXS_OK : PXS_ERR_MALFORMED;)
+}
+
+void pxs_remote_clear(pxs_remote *r)
+{
+    if (r) r->tree.clear();
+}
+
+int pxs_remote_set_value(pxs_remote *r, const char *path, const char *value_json)
+{
+    if (!r || !path || !value_json) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        if (!r->tree.find(path)) return PXS_ERR_NOT_FOUND;
+        return r->tree.setValueJson(path, value_json) ? PXS_OK : PXS_ERR_MALFORMED;
+    })
+}
+
+char *pxs_remote_node(const pxs_remote *r, const char *path)
+{
+    if (!r || !path) return nullptr;
+    try {
+        if (!r->tree.find(path)) return nullptr;
+        return duplicate(tree::remoteNodeJson(r->tree, path));
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+char *pxs_remote_signature(const pxs_remote *r)
+{
+    if (!r) return nullptr;
+    try {
+        return duplicate(r->tree.signature());
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+char *pxs_remote_leaves(const pxs_remote *r)
+{
+    if (!r) return nullptr;
+    try {
+        std::string out = "[";
+        bool first = true;
+        for (const std::string &p : r->tree.leaves()) {
+            if (!first) out += ',';
+            first = false;
+            out += '"';
+            for (char c : p) {
+                if (c == '"' || c == '\\') out += '\\';
+                out += c;
+            }
+            out += '"';
+        }
+        return duplicate(out + "]");
     } catch (...) {
         return nullptr;
     }

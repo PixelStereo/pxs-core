@@ -6,6 +6,7 @@
 #include <pxs/core/tree/tree.h>
 
 #include <string>
+#include <vector>
 
 namespace pxs::core::tree {
 
@@ -22,6 +23,16 @@ bool attributeJson(const Tree &tree, const std::string &path, const std::string 
 std::string valueJson(char tag, const Value &value);
 // The VALUE (or DEFAULT_VALUE) of a type tag string: one entry per argument, an array in the tags an array in the JSON.
 std::string valuesJson(const std::string &type, const ValueList &values);
+
+// Every attribute of the OSCQuery proposal, and whether pxs serves it. The ones marked false are declared so that the whole list is in
+// one place: implement each when an application needs it (a field on Node, served by describeJson, read by the clients, tested),
+// then mark it true. FULL_PATH, CONTENTS, TYPE and ACCESS are the ones a client cannot do without; the others are optional.
+struct OscQueryAttribute {
+    const char *name;
+    bool served;
+    const char *note;
+};
+const std::vector<OscQueryAttribute> &oscQueryAttributes();
 
 // The attributes a pxs server supports, as the EXTENSIONS of HOST_INFO (a JSON object: name -> true).
 std::string defaultExtensionsJson();

@@ -40,7 +40,7 @@ ValueList arguments(const std::string &arrayJson)
 // A node a preset may hold: a parameter that is read and written (and, when it has a Parameter, one that is saved)
 bool holdable(const Node &n)
 {
-    if (n.kind() != Kind::Parameter || n.isContainer() || n.access != 3 || !n.get || !n.set) return false;
+    if (n.kind() != Kind::Parameter || n.access != 3 || !n.get || !n.set) return false;
     return !n.parameter() || n.parameter()->isStored();
 }
 

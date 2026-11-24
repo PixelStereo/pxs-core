@@ -40,6 +40,17 @@ class PxsTree {
   ffi.NativeCallable<pxs_output_fnFunction>? _output;
   final List<ffi.NativeCallable<dynamic>> _callables = [];
   final List<ffi.Pointer<ffi.Uint8>> _held = [];
+  // What each path made to call back into Dart, so that removing a path (a rebuilt namespace) frees it
+  final Map<String, List<ffi.NativeCallable<dynamic>>> _byPath = {};
+  final Map<String, List<ffi.Pointer<ffi.Uint8>>> _heldByPath = {};
+
+  void _own(String path, Iterable<ffi.NativeCallable<dynamic>?> callables, [List<ffi.Pointer<ffi.Uint8>>? held]) {
+    final list = _byPath.putIfAbsent(path, () => []);
+    for (final c in callables) {
+      if (c != null) list.add(c);
+    }
+    if (held != null) _heldByPath[path] = held;
+  }
 
   PxsBindings get _b => Pxs.bindings;
 
@@ -108,6 +119,7 @@ class PxsTree {
       }, exceptionalReturn: 1);
       _callables.add(setter);
     }
+    _own(path, [getter, setter]);
     using((arena) {
       final keys = arena<ffi.Pointer<ffi.Char>>(choices.isEmpty ? 1 : choices.length);
       for (var i = 0; i < choices.length; i++) {
@@ -130,6 +142,129 @@ class PxsTree {
     });
   }
 
+  /// A node declared by hand, of any arguments: a point (`types: 'ff'`), a colour (`'fff'`), a text with its keys. [min] and [max] are the range of each argument
+  /// (one per argument), [vals] the keys of a text node, [defaults] what a reset writes (DEFAULT_VALUE), [unit] what it measures. [get] gives one value per
+  /// argument; [set] takes them and says whether it did. A node with a value may hold other nodes: add them at their own paths.
+  void addNode(
+    String path,
+    String types, {
+    int access = 3,
+    String description = '',
+    String unit = '',
+    List<double>? min,
+    List<double>? max,
+    List<String> vals = const [],
+    List<Object?> defaults = const [],
+    List<Object?> Function()? get,
+    bool Function(List<Object?> values)? set,
+  }) {
+    _alive();
+    final held = <ffi.Pointer<ffi.Uint8>>[]; // the strings of the last read stay valid until the next
+    ffi.NativeCallable<pxs_values_get_fnFunction>? getter;
+    ffi.NativeCallable<pxs_values_set_fnFunction>? setter;
+    if (get != null) {
+      getter = ffi.NativeCallable<pxs_values_get_fnFunction>.isolateLocal(
+        (ffi.Pointer<ffi.Void> user, ffi.Pointer<pxs_value> out, int room, ffi.Pointer<ffi.Size> count) {
+          try {
+            for (final p in held) {
+              malloc.free(p);
+              _held.remove(p);
+            }
+            held.clear();
+            final values = get();
+            final n = values.length < room ? values.length : room;
+            final arena = Arena();
+            try {
+              for (var i = 0; i < n; i++) {
+                writeValue(out + i, values[i], arena);
+                final r = (out + i).ref;
+                if (r.data != ffi.nullptr) {
+                  final copy = malloc<ffi.Uint8>(r.size + 1);
+                  copy.asTypedList(r.size).setAll(0, r.data.asTypedList(r.size));
+                  copy[r.size] = 0;
+                  held.add(copy);
+                  _held.add(copy);
+                  r.data = copy;
+                }
+              }
+            } finally {
+              arena.releaseAll();
+            }
+            count.value = n;
+            return 0;
+          } catch (_) {
+            return 1;
+          }
+        },
+        exceptionalReturn: 1,
+      );
+      _callables.add(getter);
+    }
+    if (set != null) {
+      setter = ffi.NativeCallable<pxs_values_set_fnFunction>.isolateLocal(
+        (ffi.Pointer<ffi.Void> user, ffi.Pointer<pxs_value> values, int count) {
+          try {
+            return set([for (var i = 0; i < count; i++) readValue(values + i)]) ? 0 : 1;
+          } catch (_) {
+            return 1;
+          }
+        },
+        exceptionalReturn: 1,
+      );
+      _callables.add(setter);
+    }
+    _own(path, [getter, setter], held);
+    using((arena) {
+      final spec = arena<pxs_node>();
+      final r = spec.ref;
+      r.path = path.toNativeUtf8(allocator: arena).cast();
+      r.types = types.toNativeUtf8(allocator: arena).cast();
+      r.access = access;
+      r.description = description.isEmpty ? ffi.nullptr : description.toNativeUtf8(allocator: arena).cast();
+      r.unit = unit.isEmpty ? ffi.nullptr : unit.toNativeUtf8(allocator: arena).cast();
+      if (min != null && max != null && min.length == max.length && min.isNotEmpty) {
+        final lo = arena<ffi.Double>(min.length), hi = arena<ffi.Double>(min.length);
+        for (var i = 0; i < min.length; i++) {
+          lo[i] = min[i];
+          hi[i] = max[i];
+        }
+        r.min = lo;
+        r.max = hi;
+        r.range_count = min.length;
+      } else {
+        r.min = ffi.nullptr;
+        r.max = ffi.nullptr;
+        r.range_count = 0;
+      }
+      if (vals.isNotEmpty) {
+        final keys = arena<ffi.Pointer<ffi.Char>>(vals.length);
+        for (var i = 0; i < vals.length; i++) {
+          keys[i] = vals[i].toNativeUtf8(allocator: arena).cast();
+        }
+        r.vals = keys;
+        r.vals_count = vals.length;
+      } else {
+        r.vals = ffi.nullptr;
+        r.vals_count = 0;
+      }
+      if (defaults.isNotEmpty) {
+        final d = arena<pxs_value>(defaults.length);
+        for (var i = 0; i < defaults.length; i++) {
+          writeValue(d + i, defaults[i], arena);
+        }
+        r.defaults = d;
+        r.defaults_count = defaults.length;
+      } else {
+        r.defaults = ffi.nullptr;
+        r.defaults_count = 0;
+      }
+      r.get = getter?.nativeFunction ?? ffi.nullptr;
+      r.set = setter?.nativeFunction ?? ffi.nullptr;
+      r.user = ffi.nullptr;
+      _check(_b.pxs_tree_add_node(_tree, spec), 'cannot add the node $path');
+    });
+  }
+
   /// An action at [path] ([types]: the OSC type tags of its arguments, "N" for none).
   void addAction(String path, String types, ActionHandler handler) {
     _alive();
@@ -145,6 +280,7 @@ class PxsTree {
       exceptionalReturn: 1,
     );
     _callables.add(callable);
+    _own(path, [callable]);
     using((arena) {
       _check(_b.pxs_tree_add_action(_tree, path.toNativeUtf8(allocator: arena).cast(), types.toNativeUtf8(allocator: arena).cast(), callable.nativeFunction, ffi.nullptr),
           'cannot add the action $path');
@@ -162,7 +298,22 @@ class PxsTree {
   /// True when there was a node at [path].
   bool remove(String path) {
     _alive();
-    return using((arena) => _b.pxs_tree_remove(_tree, path.toNativeUtf8(allocator: arena).cast()) == 0);
+    final removed = using((arena) => _b.pxs_tree_remove(_tree, path.toNativeUtf8(allocator: arena).cast()) == 0);
+    if (removed) {
+      // what the removed nodes called back into is freed with them (a namespace that is rebuilt does not grow)
+      final prefix = path.endsWith('/') ? path : '$path/';
+      for (final key in _byPath.keys.where((k) => k == path || k.startsWith(prefix)).toList()) {
+        for (final c in _byPath.remove(key)!) {
+          c.close();
+          _callables.remove(c);
+        }
+        for (final p in _heldByPath.remove(key) ?? const <ffi.Pointer<ffi.Uint8>>[]) {
+          malloc.free(p);
+          _held.remove(p);
+        }
+      }
+    }
+    return removed;
   }
 
   /// Where everything the tree says goes (the feedback of a parameter, a signal fired): OSC packets to send. null: nothing is told.

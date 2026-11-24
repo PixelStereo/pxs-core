@@ -233,6 +233,118 @@ void theAddressSpace()
     pxs_tree_free(nullptr);
 }
 
+struct Point {
+    double x = 0.5, y = 0.25;
+    std::string name = "a";
+};
+int pointGet(void *u, pxs_value *out, size_t capacity, size_t *count)
+{
+    auto *p = static_cast<Point *>(u);
+    if (capacity < 2) return 1;
+    out[0].kind = PXS_DOUBLE;
+    out[0].number = p->x;
+    out[1].kind = PXS_DOUBLE;
+    out[1].number = p->y;
+    *count = 2;
+    return 0;
+}
+int pointSet(void *u, const pxs_value *in, size_t count)
+{
+    auto *p = static_cast<Point *>(u);
+    if (count < 2) return 1;
+    p->x = in[0].number;
+    p->y = in[1].number;
+    return 0;
+}
+
+void aNodeOfSeveralArguments()
+{
+    pxs_tree *tree = pxs_tree_new();
+    Point point;
+    const double lo[2] = {0, 0}, hi[2] = {1, 1};
+    pxs_value defaults[2] = {};
+    defaults[0].kind = PXS_DOUBLE;
+    defaults[0].number = 0.5;
+    defaults[1].kind = PXS_DOUBLE;
+    defaults[1].number = 0.5;
+    pxs_node spec = {};
+    spec.path = "/pad/xy";
+    spec.types = "ff";
+    spec.access = 3;
+    spec.description = "A point";
+    spec.min = lo;
+    spec.max = hi;
+    spec.range_count = 2;
+    spec.defaults = defaults;
+    spec.defaults_count = 2;
+    spec.get = pointGet;
+    spec.set = pointSet;
+    spec.user = &point;
+    CHECK_EQ(pxs_tree_add_node(tree, &spec), int(PXS_OK));
+    pxs_node child = {};
+    child.path = "/pad/xy/x";
+    child.types = "f";
+    child.access = 1;
+    CHECK_EQ(pxs_tree_add_node(tree, &child), int(PXS_OK)); // a value that holds a node
+    int status = 0;
+    char *body = pxs_oscquery_answer(tree, "t", 9000, "GET", "/pad/xy", &status);
+    const std::string json = body ? body : "";
+    pxs_free(body);
+    CHECK_EQ(status, 200);
+    CHECK(json.find("\"TYPE\":\"ff\"") != std::string::npos && json.find("\"VALUE\":[0.5,0.25]") != std::string::npos);
+    CHECK(json.find("\"DEFAULT_VALUE\":[0.5,0.5]") != std::string::npos && json.find("\"CONTENTS\"") != std::string::npos);
+    const uint8_t *packet = nullptr;
+    (void)packet;
+    pxs_value args[2] = {};
+    args[0].kind = PXS_DOUBLE;
+    args[0].number = 0.9;
+    args[1].kind = PXS_DOUBLE;
+    args[1].number = 0.1;
+    uint8_t *bytes = nullptr;
+    size_t size = 0;
+    CHECK_EQ(pxs_osc_encode("/pad/xy", "ff", args, 2, &bytes, &size), int(PXS_OK));
+    CHECK_EQ(pxs_tree_apply_packet(tree, bytes, size), 1);
+    pxs_free(bytes);
+    CHECK(point.x > 0.89 && point.x < 0.91 && point.y > 0.09 && point.y < 0.11);
+    pxs_tree_free(tree);
+}
+
+void theOtherSide()
+{
+    pxs_remote *r = pxs_remote_new();
+    CHECK(r != nullptr);
+    CHECK_EQ(pxs_remote_load(r, "not json"), int(PXS_ERR_MALFORMED));
+    const char *device =
+        R"({"FULL_PATH":"/","ACCESS":0,"CONTENTS":{"color":{"FULL_PATH":"/color","ACCESS":0,"CONTENTS":{)"
+        R"("tint":{"FULL_PATH":"/color/tint","TYPE":"f","ACCESS":3,"VALUE":[0.25],"DEFAULT_VALUE":[0.0],"RANGE":[{"MIN":-100,"MAX":100}],)"
+        R"("CONTENTS":{"enable":{"FULL_PATH":"/color/tint/enable","TYPE":"T","ACCESS":3,"VALUE":[true]}}}}}}})";
+    CHECK_EQ(pxs_remote_load(r, device), int(PXS_OK));
+    char *tint = pxs_remote_node(r, "/color/tint");
+    CHECK(tint != nullptr);
+    const std::string json = tint ? tint : "";
+    pxs_free(tint);
+    CHECK(json.find("\"hasValue\":true") != std::string::npos);        // a value that holds a node is a parameter
+    CHECK(json.find("\"children\":[\"enable\"]") != std::string::npos);
+    CHECK(json.find("\"min\":-100") != std::string::npos && json.find("\"default\":0") != std::string::npos);
+    CHECK(pxs_remote_node(r, "/nothing") == nullptr);
+    CHECK_EQ(pxs_remote_set_value(r, "/color/tint", "[0.75]"), int(PXS_OK));
+    CHECK_EQ(pxs_remote_set_value(r, "/nothing", "[1]"), int(PXS_ERR_NOT_FOUND));
+    CHECK_EQ(pxs_remote_set_value(r, "/color/tint", "oops"), int(PXS_ERR_MALFORMED));
+    char *after = pxs_remote_node(r, "/color/tint");
+    CHECK(after && std::string(after).find("0.75") != std::string::npos);
+    pxs_free(after);
+    char *leaves = pxs_remote_leaves(r);
+    CHECK(leaves && std::string(leaves) == R"(["/color/tint","/color/tint/enable"])");
+    pxs_free(leaves);
+    char *sig = pxs_remote_signature(r);
+    CHECK(sig && std::string(sig).find("/color/tint|f|3") != std::string::npos);
+    pxs_free(sig);
+    pxs_remote_clear(r);
+    CHECK(pxs_remote_node(r, "/color/tint") == nullptr);
+    pxs_remote_free(r);
+    pxs_remote_free(nullptr);
+}
+
 void dmx()
 {
     pxs_dmx_frame f;
@@ -297,6 +409,8 @@ int main()
     general();
     oscRoundTrip();
     theAddressSpace();
+    aNodeOfSeveralArguments();
+    theOtherSide();
     dmx();
     midi();
     websocket();

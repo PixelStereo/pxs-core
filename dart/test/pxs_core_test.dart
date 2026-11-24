@@ -165,6 +165,112 @@ void main() {
     tree.dispose();
   });
 
+  group('a node of several arguments', () {
+    test('a point is read and written as a whole, with its range and default, and holds its components', () {
+      var x = 0.5, y = 0.25;
+      final tree = PxsTree();
+      tree.addNode('/pad/xy', 'ff',
+          description: 'A point',
+          min: [0, 0],
+          max: [1, 1],
+          defaults: [0.5, 0.5],
+          get: () => [x, y],
+          set: (v) {
+            x = (v[0] as num).toDouble();
+            y = (v[1] as num).toDouble();
+            return true;
+          });
+      tree.addNode('/pad/xy/x', 'f', access: 1, get: () => [x]);
+      final answer = tree.oscQueryAnswer('GET', '/pad/xy');
+      expect(answer.status, 200);
+      final node = jsonDecode(answer.body!) as Map<String, dynamic>;
+      expect(node['TYPE'], 'ff');
+      expect(node['VALUE'], [0.5, 0.25]);
+      expect(node['DEFAULT_VALUE'], [0.5, 0.5]);
+      expect(node['RANGE'], hasLength(2));
+      expect((node['CONTENTS'] as Map).keys, ['x']); // a value that holds a node
+      tree.applyPacket(Osc.encode('/pad/xy', 'ff', [0.9, 0.1]));
+      expect(x, closeTo(0.9, 1e-6));
+      expect(y, closeTo(0.1, 1e-6));
+      tree.dispose();
+    });
+
+    test('removing a path frees what it called back into, and the namespace can be made again', () {
+      final tree = PxsTree();
+      for (var round = 0; round < 3; round++) {
+        tree.addNode('/dev/a', 'f', get: () => [round.toDouble()], set: (v) => true);
+        tree.addAction('/dev/go', 'N', (_) => true);
+        expect(jsonDecode(tree.oscQueryAnswer('GET', '/dev/a?VALUE').body!)['VALUE'], [round.toDouble()]);
+        expect(tree.remove('/dev'), isTrue);
+        expect(tree.oscQueryAnswer('GET', '/dev/a').status, 404);
+      }
+      tree.dispose();
+    });
+
+    test('a text with its keys, and a string that is read back', () {
+      var key = 'add';
+      final tree = PxsTree();
+      tree.addNode('/blend', 's', vals: ['normal', 'add'], get: () => [key], set: (v) {
+        key = '${v[0]}';
+        return true;
+      });
+      final node = jsonDecode(tree.oscQueryAnswer('GET', '/blend').body!) as Map<String, dynamic>;
+      expect(node['VALUE'], ['add']);
+      expect((node['RANGE'] as List).first['VALS'], ['normal', 'add']);
+      tree.dispose();
+    });
+  });
+
+  group('the other side: a device\'s tree', () {
+    const device = '{"FULL_PATH":"/","ACCESS":0,"CONTENTS":{"color":{"FULL_PATH":"/color","ACCESS":0,"CONTENTS":{'
+        '"tint":{"FULL_PATH":"/color/tint","TYPE":"f","ACCESS":3,"VALUE":[0.25],"DEFAULT_VALUE":[0.0],"RANGE":[{"MIN":-100,"MAX":100}],'
+        '"CONTENTS":{"enable":{"FULL_PATH":"/color/tint/enable","TYPE":"T","ACCESS":3,"VALUE":[true]}}}}},'
+        '"blend":{"FULL_PATH":"/blend","TYPE":"s","ACCESS":3,"VALUE":["add"],"RANGE":[{"VALS":["normal","add"]}]},'
+        '"go":{"FULL_PATH":"/go","TYPE":"N","ACCESS":2}}}';
+
+    test('a value that holds a node is a parameter, and a container only holds', () {
+      final tree = PxsRemoteTree();
+      expect(tree.load('not json'), isFalse);
+      expect(tree.load(device), isTrue);
+      final tint = tree.node('/color/tint')!;
+      expect(tint.hasValue, isTrue);
+      expect(tint.isContainer, isFalse);
+      expect(tint.children, ['enable']);
+      expect(tint.value, [0.25]);
+      expect(tint.param!.type, 'float');
+      expect(tint.param!.min, -100);
+      expect(tint.param!.defaultValue, [0.0].first);
+      expect(tree.node('/color')!.isContainer, isTrue);
+      expect(tree.node('/nothing'), isNull);
+      tree.dispose();
+    });
+
+    test('choices, actions, and no reset without a DEFAULT_VALUE', () {
+      final tree = PxsRemoteTree()..load(device);
+      final blend = tree.node('/blend')!.param!;
+      expect(blend.type, 'choice');
+      expect(blend.choices, ['normal', 'add']);
+      expect(blend.defaultValue, isNull);
+      expect(tree.node('/go')!.kind, 'action');
+      expect(tree.node('/go')!.param!.type, 'trigger');
+      tree.dispose();
+    });
+
+    test('values are followed, and the signature is of what the tree is made of', () {
+      final tree = PxsRemoteTree()..load(device);
+      final before = tree.signature();
+      expect(tree.setValue('/color/tint', [0.75]), isTrue);
+      expect(tree.node('/color/tint')!.value, [0.75]);
+      expect(tree.setValue('/nothing', [1]), isFalse);
+      expect(tree.signature(), before);
+      expect(tree.leaves(), ['/blend', '/color/tint', '/color/tint/enable', '/go']);
+      tree.clear();
+      expect(tree.leaves(), isEmpty);
+      expect(tree.node('/blend'), isNull);
+      tree.dispose();
+    });
+  });
+
   group('DMX', () {
     test('an sACN frame goes round', () {
       final frame = DmxFrame(sacn: true, universe: 7, priority: 100, sequence: 9, name: 'Pixel Stereo', values: Uint8List.fromList(List.generate(512, (i) => i & 255)));

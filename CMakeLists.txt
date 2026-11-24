@@ -67,9 +67,9 @@ pxs_core_module(value
     HEADERS include/pxs/core/value.h)
 
 pxs_core_module(tree
-    SOURCES src/tree.cpp src/tree_parameter.cpp src/tree_osc_bridge.cpp src/tree_oscquery.cpp src/tree_oscquery_server.cpp src/tree_preset.cpp
+    SOURCES src/tree.cpp src/tree_parameter.cpp src/tree_osc_bridge.cpp src/tree_oscquery.cpp src/tree_oscquery_server.cpp src/tree_preset.cpp src/tree_remote.cpp
     HEADERS include/pxs/core/tree/tree.h include/pxs/core/tree/parameter.h include/pxs/core/tree/osc_bridge.h
-            include/pxs/core/tree/oscquery.h include/pxs/core/tree/oscquery_server.h include/pxs/core/tree/preset.h)
+            include/pxs/core/tree/oscquery.h include/pxs/core/tree/oscquery_server.h include/pxs/core/tree/preset.h include/pxs/core/tree/remote.h)
 # nlohmann/json is used inside the library only: its include path is private and none of its types is in a public header.
 target_include_directories(pxs_core_tree SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 target_link_libraries(pxs_core_tree PUBLIC pxs-core::osc pxs-core::value pxs-core::feed)
