@@ -418,6 +418,11 @@ void filters()
     CHECK_EQ(pxs_math_op_apply(2, 3, 2), 6.0);
     CHECK_EQ(pxs_math_op_uses_value(8), 0);
 
+    double at = -1;
+    const pxs_curve_key line[] = {{0, 0, 0, 0, 0, 0, 0}, {1, 1, 0, 0, 0, 0, 0}};
+    CHECK(pxs_curve_at(line, 2, 0.25, &at) == 1 && std::abs(at - 0.25) < 1e-9);
+    CHECK_EQ(pxs_curve_at(line, 0, 0.25, &at), 0);
+
     pxs_filter_chain *chain = pxs_filter_chain_new();
     double out = -1;
     CHECK_EQ(pxs_filter_chain_step(chain, nullptr, 0, 0.1, &out), 0); // nothing came in yet

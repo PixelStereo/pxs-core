@@ -247,6 +247,10 @@ typedef struct pxs_curve_key {
     double in_dt, in_dv, out_dt, out_dv; /* the Bézier handles; 0, 0: automatic */
 } pxs_curve_key;
 
+/* The value of a curve at `position` (its keys sorted by time): 1 and `*out`, 0 for a curve without keys, or a status. What a Curve filter
+ * makes of a value, and what its editor draws. */
+PXS_API int pxs_curve_at(const pxs_curve_key *keys, size_t count, double position, double *out);
+
 /* One stage of a chain, as the application keeps it */
 typedef struct pxs_filter_stage {
     int32_t kind;

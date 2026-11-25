@@ -32,6 +32,38 @@ class PxsBindings {
   late final _pxs_api_version = _pxs_api_versionPtr
       .asFunction<int Function()>();
 
+  /// The value of a curve at `position` (its keys sorted by time): 1 and `*out`, 0 for a curve without keys, or a status. What a Curve filter
+  /// makes of a value, and what its editor draws.
+  int pxs_curve_at(
+    ffi.Pointer<pxs_curve_key> keys,
+    int count,
+    double position,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _pxs_curve_at(keys, count, position, out);
+  }
+
+  late final _pxs_curve_atPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_curve_key>,
+            ffi.Size,
+            ffi.Double,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('pxs_curve_at');
+  late final _pxs_curve_at = _pxs_curve_atPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<pxs_curve_key>,
+          int,
+          double,
+          ffi.Pointer<ffi.Double>,
+        )
+      >();
+
   /// `sacn` says which protocol to expect. PXS_ERR_MALFORMED for anything that is not DMX of that protocol.
   int pxs_dmx_decode(
     ffi.Pointer<ffi.Uint8> data,

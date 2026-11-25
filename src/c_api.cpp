@@ -14,6 +14,7 @@
 #include <pxs/core/websocket/frame.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -647,6 +648,28 @@ int pxs_math_op_from_key(const char *key)
 
 int pxs_math_op_uses_value(int op) { return validOp(op) && filter::usesValue(filter::MathOp(op)) ? 1 : 0; }
 double pxs_math_op_apply(int op, double x, double a) { return validOp(op) ? filter::apply(filter::MathOp(op), x, a) : x; }
+
+int pxs_curve_at(const pxs_curve_key *keys, size_t count, double position, double *out)
+{
+    if (!out || (count && !keys)) return PXS_ERR_ARGUMENT;
+    if (count == 0) return 0;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        std::vector<pxs::core::timeline::Key> k(count);
+        for (size_t i = 0; i < count; ++i) {
+            k[i].t = keys[i].t;
+            k[i].v = keys[i].v;
+            k[i].curve = keys[i].curve;
+            k[i].inDt = keys[i].in_dt;
+            k[i].inDv = keys[i].in_dv;
+            k[i].outDt = keys[i].out_dt;
+            k[i].outDv = keys[i].out_dv;
+        }
+        const double v = pxs::core::timeline::curveAt(k, position);
+        if (!std::isfinite(v)) return 0;
+        *out = v;
+        return 1;
+    })
+}
 
 pxs_filter_chain *pxs_filter_chain_new(void) { PXS_TRY(nullptr, return new pxs_filter_chain();) }
 void pxs_filter_chain_free(pxs_filter_chain *chain) { delete chain; }

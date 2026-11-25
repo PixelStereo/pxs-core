@@ -53,7 +53,31 @@ class PxsFilters {
         return op < 0 ? null : op;
       });
   static bool mathOpUsesValue(int op) => _b.pxs_math_op_uses_value(op) != 0;
+
+  /// The value of a curve at [position] (its keys sorted by time): what a Curve filter makes of a value, what its editor draws. Null
+  /// for a curve without keys.
+  static double? curveAt(List<PxsCurveKey> keys, double position) => using((arena) {
+        final native = _curve(arena, keys);
+        final out = arena<ffi.Double>();
+        return _b.pxs_curve_at(native, keys.length, position, out) == 1 ? out.value : null;
+      });
   static double mathOpApply(int op, double x, double a) => _b.pxs_math_op_apply(op, x, a);
+}
+
+ffi.Pointer<pxs_curve_key> _curve(Arena arena, List<PxsCurveKey> keys) {
+  if (keys.isEmpty) return ffi.nullptr;
+  final out = arena<pxs_curve_key>(keys.length);
+  for (var k = 0; k < keys.length; ++k) {
+    final c = keys[k], o = (out + k).ref;
+    o.t = c.t;
+    o.v = c.v;
+    o.curve = c.curve;
+    o.in_dt = c.inDt;
+    o.in_dv = c.inDv;
+    o.out_dt = c.outDt;
+    o.out_dv = c.outDv;
+  }
+  return out;
 }
 
 /// A key of a Curve filter: (t, v) in 0..1, eased towards the next one (curve 0 to 5, 6 a Bézier by its handles, 100 a hold).
@@ -118,22 +142,7 @@ class PxsFilterChain implements ffi.Finalizable {
         o.d = s.d;
         o.op = s.op;
         o.curve_count = s.curve.length;
-        if (s.curve.isEmpty) {
-          o.curve = ffi.nullptr;
-        } else {
-          final keys = arena<pxs_curve_key>(s.curve.length);
-          for (var k = 0; k < s.curve.length; ++k) {
-            final c = s.curve[k], kk = (keys + k).ref;
-            kk.t = c.t;
-            kk.v = c.v;
-            kk.curve = c.curve;
-            kk.in_dt = c.inDt;
-            kk.in_dv = c.inDv;
-            kk.out_dt = c.outDt;
-            kk.out_dv = c.outDv;
-          }
-          o.curve = keys;
-        }
+        o.curve = _curve(arena, s.curve);
       }
       final out = arena<ffi.Double>();
       final r = _b.pxs_filter_chain_step(chain, native, n, dt, out);
