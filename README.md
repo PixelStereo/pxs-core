@@ -12,6 +12,7 @@ pulling a GUI toolkit; the Qt applications use the same code through the adapter
 | `pxs-core::dmx` | `pxs/core/dmx/frame.h` | Art-Net (OpDmx) and sACN (E1.31) frames |
 | `pxs-core::websocket` | `pxs/core/websocket/frame.h` | RFC 6455 frames and the handshake accept key |
 | `pxs-core::midi` | `pxs/core/midi/message.h` | MIDI channel messages (control change, notes, pitch bend, program change): parse and build |
+| `pxs-core::timeline` | `pxs/core/timeline/timeline.h` | timelines: the keys of a curve and their easings, the waves of an oscillator, the transport (once, loop, ping-pong, passes, speed) |
 | `pxs-core::value` | `pxs/core/value.h` | `Value`: the closed set of types of the address space (bool, ints, floats, string, vec2/3/4, blob) and its conversions |
 | `pxs-core::tree` | `pxs/core/tree/tree.h`, `parameter.h` | the address space: `Tree`, `Node`, `Parameter` (parameters, actions, signals), OSC applied to it, locks, observers; the OSCQuery JSON of a tree (`oscquery.h`) presets (`preset.h`) and what an OSCQuery server answers to a request (`oscquery_server.h`) |
 | `pxs-core::c` | `pxs/c/pxs.h` | the C interface to all of the above (for `dart:ffi` and other runtimes), also as a shared library: [docs/c-api.md](docs/c-api.md) |

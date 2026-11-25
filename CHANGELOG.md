@@ -3,6 +3,16 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.12.0
+
+### Added
+- **Timelines** (`pxs/core/timeline/timeline.h`, the module `pxs-core::timeline`): numbers drawn over time, the logic only. The keys of a
+  curve and the way each goes to the next (six easings, a hold, a Bézier with its handles), colour curves, a first key that starts from the
+  value the number has, the oscillators (sine, triangle, saw, square, random, smooth random, drawn from a seed), and the transport (one
+  pass of a duration, once, in a loop or back and forth, a number of passes, a speed, a loop mode changed while it plays, and what play, pause, stop, rewind, seek do to it). From NyxMap's
+  timelines, checked against them value for value (3 million values, bit for bit) before it moved. What a timeline drives, how it is saved
+  and how it is edited stay with the application (pxs-qt has the Qt face and the editor).
+
 ## 0.11.0
 
 ### Changed (breaking)
