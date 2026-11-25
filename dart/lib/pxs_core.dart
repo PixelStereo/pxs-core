@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-PixelStereo-Commercial
-/// pxs-core for Dart: OSC, the address space and OSCQuery, DMX, MIDI, through the C interface (`libpxs_c`).
+/// pxs-core for Dart: OSC, the address space and OSCQuery, DMX, MIDI, filters and physics, through the C interface (`libpxs_c`).
 ///
 /// ```dart
 /// Pxs.open(path: 'libpxs_c.dylib');
@@ -12,6 +12,7 @@
 library;
 
 export 'src/dmx_midi_websocket.dart';
+export 'src/controls.dart';
 export 'src/native.dart' show Pxs, PxsException, Vec;
 export 'src/osc.dart';
 export 'src/remote.dart';

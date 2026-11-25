@@ -10,6 +10,9 @@ headers:
 functions:
   include:
     - 'pxs_.*'
+  symbol-address:
+    include:
+      - 'pxs_filter_chain_free' # a NativeFinalizer frees a chain the application forgot
 structs:
   include:
     - 'pxs_.*'
@@ -25,6 +28,7 @@ comments:
   length: full
 llvm-path:
   - '/opt/homebrew/opt/llvm'
+  - '/Library/Developer/CommandLineTools/usr/lib'
   - '/usr/lib/llvm-18'
   - '/usr/lib/llvm-17'
   - '/usr/lib/llvm-16'

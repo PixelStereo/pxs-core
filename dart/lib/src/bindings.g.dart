@@ -32,6 +32,38 @@ class PxsBindings {
   late final _pxs_api_version = _pxs_api_versionPtr
       .asFunction<int Function()>();
 
+  /// The value of a curve at `position` (its keys sorted by time): 1 and `*out`, 0 for a curve without keys, or a status. What a Curve filter
+  /// makes of a value, and what its editor draws.
+  int pxs_curve_at(
+    ffi.Pointer<pxs_curve_key> keys,
+    int count,
+    double position,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _pxs_curve_at(keys, count, position, out);
+  }
+
+  late final _pxs_curve_atPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_curve_key>,
+            ffi.Size,
+            ffi.Double,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('pxs_curve_at');
+  late final _pxs_curve_at = _pxs_curve_atPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<pxs_curve_key>,
+          int,
+          double,
+          ffi.Pointer<ffi.Double>,
+        )
+      >();
+
   /// `sacn` says which protocol to expect. PXS_ERR_MALFORMED for anything that is not DMX of that protocol.
   int pxs_dmx_decode(
     ffi.Pointer<ffi.Uint8> data,
@@ -91,6 +123,243 @@ class PxsBindings {
         )
       >();
 
+  ffi.Pointer<ffi.Char> pxs_filter_about(int kind) {
+    return _pxs_filter_about(kind);
+  }
+
+  late final _pxs_filter_aboutPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_filter_about',
+      );
+  late final _pxs_filter_about = _pxs_filter_aboutPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  int pxs_filter_chain_curve_input(
+    ffi.Pointer<pxs_filter_chain> chain,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _pxs_filter_chain_curve_input(chain, out);
+  }
+
+  late final _pxs_filter_chain_curve_inputPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_filter_chain>,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('pxs_filter_chain_curve_input');
+  late final _pxs_filter_chain_curve_input = _pxs_filter_chain_curve_inputPtr
+      .asFunction<
+        int Function(ffi.Pointer<pxs_filter_chain>, ffi.Pointer<ffi.Double>)
+      >();
+
+  void pxs_filter_chain_free(ffi.Pointer<pxs_filter_chain> chain) {
+    return _pxs_filter_chain_free(chain);
+  }
+
+  late final _pxs_filter_chain_freePtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_filter_chain>)>
+      >('pxs_filter_chain_free');
+  late final _pxs_filter_chain_free = _pxs_filter_chain_freePtr
+      .asFunction<void Function(ffi.Pointer<pxs_filter_chain>)>();
+
+  /// A value from the source (not a number: ignored).
+  void pxs_filter_chain_input(
+    ffi.Pointer<pxs_filter_chain> chain,
+    double value,
+  ) {
+    return _pxs_filter_chain_input(chain, value);
+  }
+
+  late final _pxs_filter_chain_inputPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<pxs_filter_chain>, ffi.Double)
+        >
+      >('pxs_filter_chain_input');
+  late final _pxs_filter_chain_input = _pxs_filter_chain_inputPtr
+      .asFunction<void Function(ffi.Pointer<pxs_filter_chain>, double)>();
+
+  /// 1 and `*out`, or 0: the source's last value; what entered the first Curve in the last step.
+  int pxs_filter_chain_level(
+    ffi.Pointer<pxs_filter_chain> chain,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _pxs_filter_chain_level(chain, out);
+  }
+
+  late final _pxs_filter_chain_levelPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_filter_chain>,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('pxs_filter_chain_level');
+  late final _pxs_filter_chain_level = _pxs_filter_chain_levelPtr
+      .asFunction<
+        int Function(ffi.Pointer<pxs_filter_chain>, ffi.Pointer<ffi.Double>)
+      >();
+
+  ffi.Pointer<pxs_filter_chain> pxs_filter_chain_new() {
+    return _pxs_filter_chain_new();
+  }
+
+  late final _pxs_filter_chain_newPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<pxs_filter_chain> Function()>>(
+        'pxs_filter_chain_new',
+      );
+  late final _pxs_filter_chain_new = _pxs_filter_chain_newPtr
+      .asFunction<ffi.Pointer<pxs_filter_chain> Function()>();
+
+  void pxs_filter_chain_reset(ffi.Pointer<pxs_filter_chain> chain) {
+    return _pxs_filter_chain_reset(chain);
+  }
+
+  late final _pxs_filter_chain_resetPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_filter_chain>)>
+      >('pxs_filter_chain_reset');
+  late final _pxs_filter_chain_reset = _pxs_filter_chain_resetPtr
+      .asFunction<void Function(ffi.Pointer<pxs_filter_chain>)>();
+
+  /// The value after each stage of the last step (`*count` of them), valid until the next step.
+  ffi.Pointer<ffi.Double> pxs_filter_chain_stage_outputs(
+    ffi.Pointer<pxs_filter_chain> chain,
+    ffi.Pointer<ffi.Size> count,
+  ) {
+    return _pxs_filter_chain_stage_outputs(chain, count);
+  }
+
+  late final _pxs_filter_chain_stage_outputsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Double> Function(
+            ffi.Pointer<pxs_filter_chain>,
+            ffi.Pointer<ffi.Size>,
+          )
+        >
+      >('pxs_filter_chain_stage_outputs');
+  late final _pxs_filter_chain_stage_outputs =
+      _pxs_filter_chain_stage_outputsPtr
+          .asFunction<
+            ffi.Pointer<ffi.Double> Function(
+              ffi.Pointer<pxs_filter_chain>,
+              ffi.Pointer<ffi.Size>,
+            )
+          >();
+
+  /// One frame of `dt` seconds through `stages` (read during the call). 1 and `*out` the result, 0 when nothing came in yet, or a status.
+  int pxs_filter_chain_step(
+    ffi.Pointer<pxs_filter_chain> chain,
+    ffi.Pointer<pxs_filter_stage> stages,
+    int count,
+    double dt,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _pxs_filter_chain_step(chain, stages, count, dt, out);
+  }
+
+  late final _pxs_filter_chain_stepPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<pxs_filter_chain>,
+            ffi.Pointer<pxs_filter_stage>,
+            ffi.Size,
+            ffi.Double,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('pxs_filter_chain_step');
+  late final _pxs_filter_chain_step = _pxs_filter_chain_stepPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<pxs_filter_chain>,
+          ffi.Pointer<pxs_filter_stage>,
+          int,
+          double,
+          ffi.Pointer<ffi.Double>,
+        )
+      >();
+
+  /// The filters of a value, as pxs/core/filter/filter.h has them: a kind is a number from 0 to pxs_filter_count() - 1, saved by its key
+  /// ("average", "damper", "return"…). Names, keys and descriptions are static strings.
+  int pxs_filter_count() {
+    return _pxs_filter_count();
+  }
+
+  late final _pxs_filter_countPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function()>>('pxs_filter_count');
+  late final _pxs_filter_count = _pxs_filter_countPtr
+      .asFunction<int Function()>();
+
+  int pxs_filter_from_key(ffi.Pointer<ffi.Char> key) {
+    return _pxs_filter_from_key(key);
+  }
+
+  late final _pxs_filter_from_keyPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
+        'pxs_filter_from_key',
+      );
+  late final _pxs_filter_from_key = _pxs_filter_from_keyPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+
+  ffi.Pointer<ffi.Char> pxs_filter_group(int kind) {
+    return _pxs_filter_group(kind);
+  }
+
+  late final _pxs_filter_groupPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_filter_group',
+      );
+  late final _pxs_filter_group = _pxs_filter_groupPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  ffi.Pointer<ffi.Char> pxs_filter_key(int kind) {
+    return _pxs_filter_key(kind);
+  }
+
+  late final _pxs_filter_keyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_filter_key',
+      );
+  late final _pxs_filter_key = _pxs_filter_keyPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  ffi.Pointer<ffi.Char> pxs_filter_name(int kind) {
+    return _pxs_filter_name(kind);
+  }
+
+  late final _pxs_filter_namePtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_filter_name',
+      );
+  late final _pxs_filter_name = _pxs_filter_namePtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  /// Setting `which` (0..3: a, b, c, d) of a kind: PXS_OK, or PXS_ERR_NOT_FOUND when the kind does not use it.
+  int pxs_filter_setting_of(
+    int kind,
+    int which,
+    ffi.Pointer<pxs_filter_setting> out,
+  ) {
+    return _pxs_filter_setting_of(kind, which, out);
+  }
+
+  late final _pxs_filter_setting_ofPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(ffi.Int, ffi.Int, ffi.Pointer<pxs_filter_setting>)
+        >
+      >('pxs_filter_setting_of');
+  late final _pxs_filter_setting_of = _pxs_filter_setting_ofPtr
+      .asFunction<int Function(int, int, ffi.Pointer<pxs_filter_setting>)>();
+
   void pxs_free(ffi.Pointer<ffi.Void> p) {
     return _pxs_free(p);
   }
@@ -101,6 +370,71 @@ class PxsBindings {
       );
   late final _pxs_free = _pxs_freePtr
       .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  double pxs_math_op_apply(int op, double x, double a) {
+    return _pxs_math_op_apply(op, x, a);
+  }
+
+  late final _pxs_math_op_applyPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Double Function(ffi.Int, ffi.Double, ffi.Double)>
+      >('pxs_math_op_apply');
+  late final _pxs_math_op_apply = _pxs_math_op_applyPtr
+      .asFunction<double Function(int, double, double)>();
+
+  /// A Math filter's operation: 0..pxs_math_op_count() - 1, saved by its key ("add", "one_minus"…)
+  int pxs_math_op_count() {
+    return _pxs_math_op_count();
+  }
+
+  late final _pxs_math_op_countPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function()>>('pxs_math_op_count');
+  late final _pxs_math_op_count = _pxs_math_op_countPtr
+      .asFunction<int Function()>();
+
+  int pxs_math_op_from_key(ffi.Pointer<ffi.Char> key) {
+    return _pxs_math_op_from_key(key);
+  }
+
+  late final _pxs_math_op_from_keyPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Char>)>>(
+        'pxs_math_op_from_key',
+      );
+  late final _pxs_math_op_from_key = _pxs_math_op_from_keyPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>)>();
+
+  ffi.Pointer<ffi.Char> pxs_math_op_key(int op) {
+    return _pxs_math_op_key(op);
+  }
+
+  late final _pxs_math_op_keyPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_math_op_key',
+      );
+  late final _pxs_math_op_key = _pxs_math_op_keyPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  ffi.Pointer<ffi.Char> pxs_math_op_name(int op) {
+    return _pxs_math_op_name(op);
+  }
+
+  late final _pxs_math_op_namePtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int)>>(
+        'pxs_math_op_name',
+      );
+  late final _pxs_math_op_name = _pxs_math_op_namePtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+
+  int pxs_math_op_uses_value(int op) {
+    return _pxs_math_op_uses_value(op);
+  }
+
+  late final _pxs_math_op_uses_valuePtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int)>>(
+        'pxs_math_op_uses_value',
+      );
+  late final _pxs_math_op_uses_value = _pxs_math_op_uses_valuePtr
+      .asFunction<int Function(int)>();
 
   /// The bytes of a message: `kind` 0 control change, 1 note on, 2 note off, 3 pitch bend, 4 program change. Free the buffer.
   int pxs_midi_build(
@@ -367,6 +701,86 @@ class PxsBindings {
           ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Int>,
+        )
+      >();
+
+  void pxs_physics_clamp(ffi.Pointer<pxs_physics> settings) {
+    return _pxs_physics_clamp(settings);
+  }
+
+  late final _pxs_physics_clampPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_physics>)>>(
+        'pxs_physics_clamp',
+      );
+  late final _pxs_physics_clamp = _pxs_physics_clampPtr
+      .asFunction<void Function(ffi.Pointer<pxs_physics>)>();
+
+  void pxs_physics_defaults(ffi.Pointer<pxs_physics> out) {
+    return _pxs_physics_defaults(out);
+  }
+
+  late final _pxs_physics_defaultsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_physics>)>>(
+        'pxs_physics_defaults',
+      );
+  late final _pxs_physics_defaults = _pxs_physics_defaultsPtr
+      .asFunction<void Function(ffi.Pointer<pxs_physics>)>();
+
+  /// One step of `dt` seconds of `count` numbers, each in the 0..1 of its range: `pos` and `vel` are moved in place towards `target`. `held`:
+  /// the hand is on the control; `hand` (NULL: all of them) says which numbers it holds. Number i moves by each[i], by the last one when
+  /// there are fewer. 1 while something still moves, 0 when all is still, or a status.
+  int pxs_physics_step(
+    ffi.Pointer<ffi.Double> pos,
+    ffi.Pointer<ffi.Double> vel,
+    ffi.Pointer<ffi.Double> target,
+    int count,
+    int held,
+    ffi.Pointer<ffi.Uint8> hand,
+    ffi.Pointer<pxs_physics> each,
+    int each_count,
+    double dt,
+  ) {
+    return _pxs_physics_step(
+      pos,
+      vel,
+      target,
+      count,
+      held,
+      hand,
+      each,
+      each_count,
+      dt,
+    );
+  }
+
+  late final _pxs_physics_stepPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Double>,
+            ffi.Pointer<ffi.Double>,
+            ffi.Pointer<ffi.Double>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<pxs_physics>,
+            ffi.Size,
+            ffi.Double,
+          )
+        >
+      >('pxs_physics_step');
+  late final _pxs_physics_step = _pxs_physics_stepPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Double>,
+          ffi.Pointer<ffi.Double>,
+          ffi.Pointer<ffi.Double>,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<pxs_physics>,
+          int,
+          double,
         )
       >();
 
@@ -867,6 +1281,17 @@ class PxsBindings {
       >('pxs_websocket_accept_key');
   late final _pxs_websocket_accept_key = _pxs_websocket_accept_keyPtr
       .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+
+  late final addresses = _SymbolAddresses(this);
+}
+
+class _SymbolAddresses {
+  final PxsBindings _library;
+  _SymbolAddresses(this._library);
+  ffi.Pointer<
+    ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_filter_chain>)>
+  >
+  get pxs_filter_chain_free => _library._pxs_filter_chain_freePtr;
 }
 
 const int PXS_C_API_VERSION = 1;
@@ -885,6 +1310,49 @@ typedef Dartpxs_action_fnFunction =
       ffi.Pointer<pxs_value> args,
       int argc,
     );
+
+/// A key of a Curve filter: (t, v) in 0..1, eased towards the next one (curve: 0 to 5, 6 a Bézier by the handles, 100 a hold).
+final class pxs_curve_key extends ffi.Struct {
+  @ffi.Double()
+  external double t;
+
+  @ffi.Double()
+  external double v;
+
+  @ffi.Int32()
+  external int curve;
+
+  /// the Bézier handles; 0, 0: automatic
+  @ffi.Double()
+  external double in_dt;
+
+  @ffi.Double()
+  external double in_dv;
+
+  @ffi.Double()
+  external double out_dt;
+
+  @ffi.Double()
+  external double out_dv;
+
+  static ffi.Pointer<pxs_curve_key> $allocate(
+    ffi.Allocator $allocator, {
+    required double t,
+    required double v,
+    required int curve,
+    required double in_dt,
+    required double in_dv,
+    required double out_dt,
+    required double out_dv,
+  }) => $allocator<pxs_curve_key>()
+    ..ref.t = t
+    ..ref.v = v
+    ..ref.curve = curve
+    ..ref.in_dt = in_dt
+    ..ref.in_dv = in_dv
+    ..ref.out_dt = out_dt
+    ..ref.out_dv = out_dv;
+}
 
 /// ---- DMX over the network (Art-Net, sACN) -------------------------------------------------------------------------------------
 final class pxs_dmx_frame extends ffi.Struct {
@@ -921,6 +1389,93 @@ final class pxs_dmx_frame extends ffi.Struct {
   /// the levels
   @ffi.Array.multi([512])
   external ffi.Array<ffi.Uint8> values;
+}
+
+final class pxs_filter_chain extends ffi.Opaque {}
+
+final class pxs_filter_setting extends ffi.Struct {
+  /// static
+  external ffi.Pointer<ffi.Char> name;
+
+  /// " s", " /s" or ""
+  external ffi.Pointer<ffi.Char> suffix;
+
+  @ffi.Double()
+  external double min;
+
+  @ffi.Double()
+  external double max;
+
+  @ffi.Double()
+  external double def;
+
+  static ffi.Pointer<pxs_filter_setting> $allocate(
+    ffi.Allocator $allocator, {
+    required ffi.Pointer<ffi.Char> name,
+    required ffi.Pointer<ffi.Char> suffix,
+    required double min,
+    required double max,
+    required double def,
+  }) => $allocator<pxs_filter_setting>()
+    ..ref.name = name
+    ..ref.suffix = suffix
+    ..ref.min = min
+    ..ref.max = max
+    ..ref.def = def;
+}
+
+/// One stage of a chain, as the application keeps it
+final class pxs_filter_stage extends ffi.Struct {
+  @ffi.Int32()
+  external int kind;
+
+  @ffi.Int32()
+  external int enabled;
+
+  /// its settings
+  @ffi.Double()
+  external double a;
+
+  @ffi.Double()
+  external double b;
+
+  @ffi.Double()
+  external double c;
+
+  @ffi.Double()
+  external double d;
+
+  /// Math
+  @ffi.Int32()
+  external int op;
+
+  /// Curve: its keys (NULL or none: the value goes through)
+  external ffi.Pointer<pxs_curve_key> curve;
+
+  @ffi.Size()
+  external int curve_count;
+
+  static ffi.Pointer<pxs_filter_stage> $allocate(
+    ffi.Allocator $allocator, {
+    required int kind,
+    required int enabled,
+    required double a,
+    required double b,
+    required double c,
+    required double d,
+    required int op,
+    required ffi.Pointer<pxs_curve_key> curve,
+    required int curve_count,
+  }) => $allocator<pxs_filter_stage>()
+    ..ref.kind = kind
+    ..ref.enabled = enabled
+    ..ref.a = a
+    ..ref.b = b
+    ..ref.c = c
+    ..ref.d = d
+    ..ref.op = op
+    ..ref.curve = curve
+    ..ref.curve_count = curve_count;
 }
 
 /// Where a parameter's value lives: `get` fills `*out` (a string it points to must stay valid until the next call of `get` or `set` on
@@ -1113,6 +1668,43 @@ enum pxs_param_type {
     5 => PXS_PARAM_TRIGGER,
     _ => throw ArgumentError('Unknown value for pxs_param_type: $value'),
   };
+}
+
+/// How a control's numbers move, as pxs/core/physics/physics.h has it: mode 0 none (where the hand is), 1 Interpolate, 2 Mass-Spring.
+final class pxs_physics extends ffi.Struct {
+  @ffi.Int32()
+  external int mode;
+
+  @ffi.Double()
+  external double friction;
+
+  @ffi.Double()
+  external double attraction;
+
+  @ffi.Double()
+  external double tension;
+
+  @ffi.Double()
+  external double wall;
+
+  @ffi.Double()
+  external double rate;
+
+  static ffi.Pointer<pxs_physics> $allocate(
+    ffi.Allocator $allocator, {
+    required int mode,
+    required double friction,
+    required double attraction,
+    required double tension,
+    required double wall,
+    required double rate,
+  }) => $allocator<pxs_physics>()
+    ..ref.mode = mode
+    ..ref.friction = friction
+    ..ref.attraction = attraction
+    ..ref.tension = tension
+    ..ref.wall = wall
+    ..ref.rate = rate;
 }
 
 /// What an OSCQuery device answers to GET /, kept as a tree to browse and read. The sockets are the caller's (HTTP, WebSocket LISTEN, UDP): this

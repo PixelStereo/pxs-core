@@ -83,6 +83,18 @@ pxs_core_module(timeline
     SOURCES src/timeline.cpp
     HEADERS include/pxs/core/timeline/timeline.h)
 
+# Filters: a value through a chain of stages, frame by frame (smoothing, shape, timing, triggers). The logic; where the value comes from,
+# where it goes and how the chain is saved and edited is the application's
+pxs_core_module(filter
+    SOURCES src/filter.cpp
+    HEADERS include/pxs/core/filter/filter.h)
+target_link_libraries(pxs_core_filter PUBLIC pxs-core::timeline)
+
+# Physics: a control's numbers moved by the hand (Interpolate, Mass-Spring), frame by frame
+pxs_core_module(physics
+    SOURCES src/physics.cpp
+    HEADERS include/pxs/core/physics/physics.h)
+
 # The C interface (a Flutter application through dart:ffi, another language's runtime): every module behind plain functions. The static
 # library always; a shared one (libpxs_c) on request, with only the pxs_* functions exported.
 add_library(pxs_core_c STATIC src/c_api.cpp include/pxs/c/pxs.h)
@@ -93,7 +105,7 @@ target_include_directories(pxs_core_c PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(pxs_core_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
-target_link_libraries(pxs_core_c PUBLIC pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+target_link_libraries(pxs_core_c PUBLIC pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value pxs-core::filter pxs-core::physics)
 pxs_core_harden(pxs_core_c)
 option(PXS_CORE_BUILD_SHARED_C "Also build libpxs_c, the C interface as a shared library (for dart:ffi, Android, desktop)" OFF)
 if(PXS_CORE_BUILD_SHARED_C)
@@ -105,7 +117,7 @@ if(PXS_CORE_BUILD_SHARED_C)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_include_directories(pxs_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
-    target_link_libraries(pxs_c PRIVATE pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+    target_link_libraries(pxs_c PRIVATE pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value pxs-core::filter pxs-core::physics)
     pxs_core_harden(pxs_c)
     # Only the pxs_* functions are exported, not the C++ of the modules behind them
     if(APPLE)
@@ -136,7 +148,7 @@ if(PXS_CORE_BUILD_FUZZERS)
 endif()
 
 if(PXS_CORE_INSTALL)
-    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_timeline pxs_core_feed pxs_core_value pxs_core_tree pxs_core_c EXPORT pxs-core-targets
+    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_timeline pxs_core_filter pxs_core_physics pxs_core_feed pxs_core_value pxs_core_tree pxs_core_c EXPORT pxs-core-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY include/pxs DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/pxs/core/version.h
