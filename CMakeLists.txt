@@ -88,12 +88,20 @@ pxs_core_module(timeline
 pxs_core_module(filter
     SOURCES src/filter.cpp
     HEADERS include/pxs/core/filter/filter.h)
-target_link_libraries(pxs_core_filter PUBLIC pxs-core::timeline)
+target_link_libraries(pxs_core_filter PUBLIC pxs-core::timeline pxs-core::physics)
 
 # Physics: a control's numbers moved by the hand (Interpolate, Mass-Spring), frame by frame
 pxs_core_module(physics
     SOURCES src/physics.cpp
     HEADERS include/pxs/core/physics/physics.h)
+
+# Devices: what an application drives (OSCQuery, OSC, DMX 8 / 16 bits, MIDI), their ids, their JSON and what a value is on their wire.
+# The sockets, the outputs and the ports are the platform's
+pxs_core_module(device
+    SOURCES src/device.cpp
+    HEADERS include/pxs/core/device/device.h)
+target_include_directories(pxs_core_device SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
+target_link_libraries(pxs_core_device PUBLIC pxs-core::osc pxs-core::midi pxs-core::dmx)
 
 # The C interface (a Flutter application through dart:ffi, another language's runtime): every module behind plain functions. The static
 # library always; a shared one (libpxs_c) on request, with only the pxs_* functions exported.
@@ -148,7 +156,7 @@ if(PXS_CORE_BUILD_FUZZERS)
 endif()
 
 if(PXS_CORE_INSTALL)
-    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_timeline pxs_core_filter pxs_core_physics pxs_core_feed pxs_core_value pxs_core_tree pxs_core_c EXPORT pxs-core-targets
+    install(TARGETS pxs_core_osc pxs_core_dmx pxs_core_websocket pxs_core_midi pxs_core_timeline pxs_core_filter pxs_core_physics pxs_core_device pxs_core_feed pxs_core_value pxs_core_tree pxs_core_c EXPORT pxs-core-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(DIRECTORY include/pxs DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/pxs/core/version.h

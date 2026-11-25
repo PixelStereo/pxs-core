@@ -3,6 +3,23 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.14.0
+
+### Added
+- **Devices** (`pxs/core/device/device.h`, the module `pxs-core::device`): what an application drives, the same in every application, from
+  OSCQlock's destinations. A device is an OSCQuery device, a plain OSC receiver, a DMX fixture or a MIDI instrument, with the addresses it
+  takes (a path and a range). What a value is on its wire: an OSC message of the address's tag (f, d, i, h, T); DMX on 8 bits, or 16 on two
+  channels, coarse then fine, from the fixture's start address in its universe; MIDI control change, note, pitch bend or program change on
+  the device's channel. A plain OSC device may declare no address and take any path (MpOsc's destinations). `Registry` keeps an id for
+  each device by what it is (kind and name; an OSCQuery device added by hand by its host and port), so that a device found again or read
+  from a show file gets the id it had, says whether a value differs from the last one sent there, and saves the devices made by hand with
+  every id as JSON. The sockets, the DMX outputs, the MIDI ports and the discovery stay the platform's (pxs-qt). Not yet in the C interface.
+- **Physics filter** (`filter::Kind::Physics`, key `physics`, in Smoothing): `pxs-core::physics`'s Mass-Spring as a stage of a chain, in
+  0..1, with Friction, Attraction, Tension and Bounce. The value holds it (the spring pulls it with Attraction) while values come
+  (`kPhysicsQuiet`, a quarter of a second); when the source goes quiet it is let go: thrown on by its speed, pulled back to where the
+  value was by Tension, bouncing on 0 and 1. Interpolate is Weighted Average. `kKindCount` is 19; `pxs-core::filter` links
+  `pxs-core::physics`.
+
 ## 0.13.0
 
 ### Added

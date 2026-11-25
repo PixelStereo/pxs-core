@@ -13,7 +13,10 @@
 //     timing — Delay (the value of a moment ago), Hold (a fall waits), Debounce (a change is followed once it lasts), Auto Return (back
 //     to its rest after a time), Speed (how fast it moves);
 //     trigger — Toggle (flips between 0 and 1 each time it goes up past its threshold), Pulse Detection (a pulse on each sudden rise,
-//     decaying), Envelope (a trigger in, an ADSR out).
+//     decaying), Envelope (a trigger in, an ADSR out);
+//     and Physics, a smoothing with momentum (pxs-core::physics's mass on a spring, in 0..1: pulled to the value while values come, it goes on by itself
+//     when the source goes quiet, and bounces on 0 and 1).
+#include <pxs/core/physics/physics.h>
 #include <pxs/core/timeline/timeline.h>
 
 #include <cstddef>
@@ -32,9 +35,12 @@ enum class Kind {
     Envelope,  // a trigger in, an ADSR out: Attack, Decay, Sustain, Release (the impact of a hit, a flash, a pulse)
     Hold,      // a fall is held for a time before it follows (a switch stays on a moment after it went off)
     Debounce,  // a change is followed once the value has not changed for a time (a flicker is ignored)
-    AutoReturn // leaves its rest value for a time, then goes back to it until the value is at rest again
+    AutoReturn, // leaves its rest value for a time, then goes back to it until the value is at rest again
+    Physics     // a mass on a spring in 0..1 (pxs-core::physics, Mass-Spring): held to the value while values come, thrown when they stop
 };
-inline constexpr int kKindCount = 18;
+inline constexpr int kKindCount = 19;
+// Physics: the value is held (the spring pulls it with Attraction) while values came within this time; after it, it is let go
+inline constexpr double kPhysicsQuiet = 0.25;
 
 enum class MathOp { Add = 0, Subtract, Multiply, Divide, Modulo, Power, Min, Max, Abs, Floor, Ceil, Round, OneMinus };
 inline constexpr int kMathOpCount = 13;
@@ -45,7 +51,7 @@ inline constexpr int kSettingCount = 4; // a, b, c, d
 
 const char *key(Kind k);   // as saved: "average", "weighted_average"… ("return" for Auto Return)
 const char *name(Kind k);  // "Average", "Weighted Average"…
-const char *group(Kind k); // "Smoothing", "Shape", "Timing" or "Trigger"
+const char *group(Kind k); // "Smoothing", "Shape", "Timing" or "Trigger" (Physics is Smoothing)
 const char *about(Kind k); // what it does, in a sentence
 std::optional<Kind> kindFromKey(std::string_view key);
 
@@ -119,6 +125,8 @@ private:
         int phase = 0;                           // Envelope: 0 idle, 1 attack, 2 decay, 3 sustain, 4 release
         double peak = 1;                         // Envelope: the level the trigger came in at (its velocity)
         std::deque<std::pair<double, double>> window{}; // Average, Delay: (time, value)
+        double quiet = 0;                               // Physics: seconds since a value came
+        physics::Body body{};                           // Physics: the mass (one number)
     };
     std::optional<double> m_level;
     bool m_fresh = false; // a value came in since the last step
