@@ -213,6 +213,65 @@ PXS_API int pxs_midi_parse(const uint8_t *data, size_t size, pxs_midi_message *o
 /* The bytes of a message: `kind` 0 control change, 1 note on, 2 note off, 3 pitch bend, 4 program change. Free the buffer. */
 PXS_API int pxs_midi_build(int kind, int channel, int number, double value, uint8_t **out, size_t *size);
 
+/* ---- filters ------------------------------------------------------------------------------------------------------------------ */
+
+/* The filters of a value, as pxs/core/filter/filter.h has them: a kind is a number from 0 to pxs_filter_count() - 1, saved by its key
+ * ("average", "damper", "return"…). Names, keys and descriptions are static strings. */
+PXS_API int pxs_filter_count(void);
+PXS_API const char *pxs_filter_key(int kind);   /* NULL for a kind out of range */
+PXS_API const char *pxs_filter_name(int kind);  /* "Weighted Average"… */
+PXS_API const char *pxs_filter_group(int kind); /* "Smoothing", "Shape", "Timing" or "Trigger" */
+PXS_API const char *pxs_filter_about(int kind); /* what it does, in a sentence */
+PXS_API int pxs_filter_from_key(const char *key); /* the kind, or PXS_ERR_NOT_FOUND */
+
+typedef struct pxs_filter_setting {
+    const char *name;   /* static */
+    const char *suffix; /* " s", " /s" or "" */
+    double min, max, def;
+} pxs_filter_setting;
+/* Setting `which` (0..3: a, b, c, d) of a kind: PXS_OK, or PXS_ERR_NOT_FOUND when the kind does not use it. */
+PXS_API int pxs_filter_setting_of(int kind, int which, pxs_filter_setting *out);
+
+/* A Math filter's operation: 0..pxs_math_op_count() - 1, saved by its key ("add", "one_minus"…) */
+PXS_API int pxs_math_op_count(void);
+PXS_API const char *pxs_math_op_key(int op);
+PXS_API const char *pxs_math_op_name(int op); /* "x + a"… */
+PXS_API int pxs_math_op_from_key(const char *key); /* the op, or PXS_ERR_NOT_FOUND */
+PXS_API int pxs_math_op_uses_value(int op);         /* 1: it takes `a` */
+PXS_API double pxs_math_op_apply(int op, double x, double a);
+
+/* A key of a Curve filter: (t, v) in 0..1, eased towards the next one (curve: 0 to 5, 6 a Bézier by the handles, 100 a hold). */
+typedef struct pxs_curve_key {
+    double t, v;
+    int32_t curve;
+    double in_dt, in_dv, out_dt, out_dv; /* the Bézier handles; 0, 0: automatic */
+} pxs_curve_key;
+
+/* One stage of a chain, as the application keeps it */
+typedef struct pxs_filter_stage {
+    int32_t kind;
+    int32_t enabled;
+    double a, b, c, d;           /* its settings */
+    int32_t op;                  /* Math */
+    const pxs_curve_key *curve;  /* Curve: its keys (NULL or none: the value goes through) */
+    size_t curve_count;
+} pxs_filter_stage;
+
+typedef struct pxs_filter_chain pxs_filter_chain; /* the state of a value through its stages, frame after frame */
+
+PXS_API pxs_filter_chain *pxs_filter_chain_new(void);
+PXS_API void pxs_filter_chain_free(pxs_filter_chain *chain);
+PXS_API void pxs_filter_chain_reset(pxs_filter_chain *chain);
+/* A value from the source (not a number: ignored). */
+PXS_API void pxs_filter_chain_input(pxs_filter_chain *chain, double value);
+/* One frame of `dt` seconds through `stages` (read during the call). 1 and `*out` the result, 0 when nothing came in yet, or a status. */
+PXS_API int pxs_filter_chain_step(pxs_filter_chain *chain, const pxs_filter_stage *stages, size_t count, double dt, double *out);
+/* The value after each stage of the last step (`*count` of them), valid until the next step. */
+PXS_API const double *pxs_filter_chain_stage_outputs(const pxs_filter_chain *chain, size_t *count);
+/* 1 and `*out`, or 0: the source's last value; what entered the first Curve in the last step. */
+PXS_API int pxs_filter_chain_level(const pxs_filter_chain *chain, double *out);
+PXS_API int pxs_filter_chain_curve_input(const pxs_filter_chain *chain, double *out);
+
 /* ---- WebSocket ---------------------------------------------------------------------------------------------------------------- */
 
 /* The Sec-WebSocket-Accept of a handshake, from the client's Sec-WebSocket-Key (free the string). */

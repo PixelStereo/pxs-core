@@ -1,6 +1,7 @@
 #include <pxs/c/pxs.h>
 
 #include <pxs/core/dmx/frame.h>
+#include <pxs/core/filter/filter.h>
 #include <pxs/core/midi/message.h>
 #include <pxs/core/osc/codec.h>
 #include <pxs/core/tree/oscquery_server.h>
@@ -36,6 +37,12 @@ struct pxs_osc_packet {
 
 struct pxs_remote {
     tree::RemoteTree tree;
+};
+
+struct pxs_filter_chain {
+    pxs::core::filter::Chain chain;
+    std::vector<pxs::core::filter::StageView> views;
+    std::vector<std::vector<pxs::core::timeline::Key>> curves; // the stages' keys, as pxs-core has them
 };
 
 struct pxs_tree {
@@ -594,6 +601,116 @@ int pxs_midi_build(int kind, int channel, int number, double value, std::uint8_t
         *size = bytes.size();
         return PXS_OK;
     })
+}
+
+// ---- filters ----
+
+namespace {
+namespace filter = pxs::core::filter;
+bool validKind(int kind) { return kind >= 0 && kind < filter::kKindCount; }
+bool validOp(int op) { return op >= 0 && op < filter::kMathOpCount; }
+} // namespace
+
+int pxs_filter_count(void) { return filter::kKindCount; }
+const char *pxs_filter_key(int kind) { return validKind(kind) ? filter::key(filter::Kind(kind)) : nullptr; }
+const char *pxs_filter_name(int kind) { return validKind(kind) ? filter::name(filter::Kind(kind)) : nullptr; }
+const char *pxs_filter_group(int kind) { return validKind(kind) ? filter::group(filter::Kind(kind)) : nullptr; }
+const char *pxs_filter_about(int kind) { return validKind(kind) ? filter::about(filter::Kind(kind)) : nullptr; }
+
+int pxs_filter_from_key(const char *key)
+{
+    if (!key) return PXS_ERR_ARGUMENT;
+    const auto k = filter::kindFromKey(key);
+    return k ? int(*k) : PXS_ERR_NOT_FOUND;
+}
+
+int pxs_filter_setting_of(int kind, int which, pxs_filter_setting *out)
+{
+    if (!out || !validKind(kind)) return PXS_ERR_ARGUMENT;
+    const filter::Setting s = filter::setting(filter::Kind(kind), which);
+    if (!s.name) return PXS_ERR_NOT_FOUND;
+    *out = pxs_filter_setting{s.name, s.suffix, s.min, s.max, s.def};
+    return PXS_OK;
+}
+
+int pxs_math_op_count(void) { return filter::kMathOpCount; }
+const char *pxs_math_op_key(int op) { return validOp(op) ? filter::key(filter::MathOp(op)) : nullptr; }
+const char *pxs_math_op_name(int op) { return validOp(op) ? filter::name(filter::MathOp(op)) : nullptr; }
+
+int pxs_math_op_from_key(const char *key)
+{
+    if (!key) return PXS_ERR_ARGUMENT;
+    const auto op = filter::mathOpFromKey(key);
+    return op ? int(*op) : PXS_ERR_NOT_FOUND;
+}
+
+int pxs_math_op_uses_value(int op) { return validOp(op) && filter::usesValue(filter::MathOp(op)) ? 1 : 0; }
+double pxs_math_op_apply(int op, double x, double a) { return validOp(op) ? filter::apply(filter::MathOp(op), x, a) : x; }
+
+pxs_filter_chain *pxs_filter_chain_new(void) { PXS_TRY(nullptr, return new pxs_filter_chain();) }
+void pxs_filter_chain_free(pxs_filter_chain *chain) { delete chain; }
+
+void pxs_filter_chain_reset(pxs_filter_chain *chain)
+{
+    if (chain) chain->chain.reset();
+}
+
+void pxs_filter_chain_input(pxs_filter_chain *chain, double value)
+{
+    if (chain) chain->chain.input(value);
+}
+
+int pxs_filter_chain_step(pxs_filter_chain *chain, const pxs_filter_stage *stages, size_t count, double dt, double *out)
+{
+    if (!chain || !out || (count && !stages)) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        chain->views.resize(count);
+        chain->curves.resize(count);
+        for (size_t i = 0; i < count; ++i) {
+            const pxs_filter_stage &s = stages[i];
+            if (!validKind(s.kind) || !validOp(s.op) || (s.curve_count && !s.curve)) return PXS_ERR_ARGUMENT;
+            std::vector<pxs::core::timeline::Key> &keys = chain->curves[i];
+            keys.resize(s.curve ? s.curve_count : 0);
+            for (size_t k = 0; k < keys.size(); ++k) {
+                const pxs_curve_key &c = s.curve[k];
+                keys[k] = pxs::core::timeline::Key{};
+                keys[k].t = c.t;
+                keys[k].v = c.v;
+                keys[k].curve = c.curve;
+                keys[k].inDt = c.in_dt;
+                keys[k].inDv = c.in_dv;
+                keys[k].outDt = c.out_dt;
+                keys[k].outDv = c.out_dv;
+            }
+            chain->views[i] = {filter::Kind(s.kind), s.enabled != 0, s.a, s.b, s.c, s.d, filter::MathOp(s.op), &keys};
+        }
+        const std::optional<double> y = chain->chain.step(chain->views, dt);
+        if (!y) return 0;
+        *out = *y;
+        return 1;
+    })
+}
+
+const double *pxs_filter_chain_stage_outputs(const pxs_filter_chain *chain, size_t *count)
+{
+    if (count) *count = chain ? chain->chain.stageOutputs().size() : 0;
+    return chain && !chain->chain.stageOutputs().empty() ? chain->chain.stageOutputs().data() : nullptr;
+}
+
+int pxs_filter_chain_level(const pxs_filter_chain *chain, double *out)
+{
+    if (!chain || !out) return PXS_ERR_ARGUMENT;
+    const auto v = chain->chain.level();
+    if (v) *out = *v;
+    return v ? 1 : 0;
+}
+
+int pxs_filter_chain_curve_input(const pxs_filter_chain *chain, double *out)
+{
+    if (!chain || !out) return PXS_ERR_ARGUMENT;
+    const auto v = chain->chain.curveInput();
+    if (v) *out = *v;
+    return v ? 1 : 0;
 }
 
 // ---- WebSocket ----

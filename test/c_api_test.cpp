@@ -402,6 +402,54 @@ void websocket()
     CHECK(pxs_websocket_accept_key(nullptr) == nullptr);
 }
 
+void filters()
+{
+    CHECK_EQ(pxs_filter_count(), 18);
+    CHECK(std::string(pxs_filter_key(17)) == "return");
+    CHECK(pxs_filter_key(18) == nullptr && pxs_filter_name(-1) == nullptr);
+    CHECK_EQ(pxs_filter_from_key("damper"), 4);
+    CHECK_EQ(pxs_filter_from_key("nothing"), PXS_ERR_NOT_FOUND);
+    CHECK(std::string(pxs_filter_group(4)) == "Smoothing");
+    pxs_filter_setting s{};
+    CHECK_EQ(pxs_filter_setting_of(4, 1, &s), PXS_OK);
+    CHECK(std::string(s.name) == "Damping");
+    CHECK_EQ(pxs_filter_setting_of(4, 2, &s), PXS_ERR_NOT_FOUND);
+    CHECK_EQ(pxs_math_op_from_key("one_minus"), 12);
+    CHECK_EQ(pxs_math_op_apply(2, 3, 2), 6.0);
+    CHECK_EQ(pxs_math_op_uses_value(8), 0);
+
+    pxs_filter_chain *chain = pxs_filter_chain_new();
+    double out = -1;
+    CHECK_EQ(pxs_filter_chain_step(chain, nullptr, 0, 0.1, &out), 0); // nothing came in yet
+    // A Math × 2, then a Curve inverted (1 at 0, 0 at 1)
+    const pxs_curve_key keys[] = {{0, 1, 0, 0, 0, 0, 0}, {1, 0, 0, 0, 0, 0, 0}};
+    pxs_filter_stage stages[2]{};
+    stages[0].kind = pxs_filter_from_key("math");
+    stages[0].enabled = 1;
+    stages[0].a = 2;
+    stages[0].op = pxs_math_op_from_key("multiply");
+    stages[1].kind = pxs_filter_from_key("curve");
+    stages[1].enabled = 1;
+    stages[1].op = 2;
+    stages[1].curve = keys;
+    stages[1].curve_count = 2;
+    pxs_filter_chain_input(chain, 0.2);
+    CHECK_EQ(pxs_filter_chain_step(chain, stages, 2, 0.01, &out), 1);
+    CHECK(std::abs(out - 0.6) < 1e-9);
+    size_t n = 0;
+    const double *each = pxs_filter_chain_stage_outputs(chain, &n);
+    CHECK(n == 2 && each && std::abs(each[0] - 0.4) < 1e-9);
+    double v = 0;
+    CHECK(pxs_filter_chain_curve_input(chain, &v) == 1 && std::abs(v - 0.4) < 1e-9);
+    CHECK(pxs_filter_chain_level(chain, &v) == 1 && v == 0.2);
+    stages[0].kind = 99;
+    CHECK_EQ(pxs_filter_chain_step(chain, stages, 2, 0.01, &out), PXS_ERR_ARGUMENT);
+    pxs_filter_chain_reset(chain);
+    CHECK_EQ(pxs_filter_chain_level(chain, &v), 0);
+    pxs_filter_chain_free(chain);
+    pxs_filter_chain_free(nullptr);
+}
+
 } // namespace
 
 int main()
@@ -414,5 +462,6 @@ int main()
     dmx();
     midi();
     websocket();
+    filters();
     return pxs_test::finish("c_api");
 }

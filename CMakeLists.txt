@@ -100,7 +100,7 @@ target_include_directories(pxs_core_c PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(pxs_core_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
-target_link_libraries(pxs_core_c PUBLIC pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+target_link_libraries(pxs_core_c PUBLIC pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value pxs-core::filter)
 pxs_core_harden(pxs_core_c)
 option(PXS_CORE_BUILD_SHARED_C "Also build libpxs_c, the C interface as a shared library (for dart:ffi, Android, desktop)" OFF)
 if(PXS_CORE_BUILD_SHARED_C)
@@ -112,7 +112,7 @@ if(PXS_CORE_BUILD_SHARED_C)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_include_directories(pxs_c PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
-    target_link_libraries(pxs_c PRIVATE pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value)
+    target_link_libraries(pxs_c PRIVATE pxs-core::tree pxs-core::dmx pxs-core::midi pxs-core::websocket pxs-core::osc pxs-core::value pxs-core::filter)
     pxs_core_harden(pxs_c)
     # Only the pxs_* functions are exported, not the C++ of the modules behind them
     if(APPLE)
