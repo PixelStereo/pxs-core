@@ -94,6 +94,12 @@ struct Transport {
     // A new loop mode / repeat while it runs: it goes on from where it is, the way it goes, and the passes count from the one it is
     // in (Once: it ends this pass, then stops; it does not jump to the end)
     void setLoop(Loop loop, int repeat);
+    // What an action does (Play: from where it is, from the start once stopped; Pause; Stop: back to the start; Rewind: to the start;
+    // Seek: to `time` seconds of its clock, a stopped transport then stays there paused; Speed: `time` is the speed, 0 to 10, it goes on
+    // from where it is; LoopMode: `loop` and `repeat`, see setLoop). True when it now starts from where it is put without having
+    // played up to there (a Play from stopped, a Rewind, a Seek from stopped): the moment to read the values the "current value"
+    // keys start from.
+    bool control(Action action, double time = 0, Loop loopMode = Loop::Loop, int passes = 0);
     // One step of its clock while it plays (dt seconds of real time, times the speed); false once it is over (Once, or its passes
     // done): its last values hold
     bool advance(double dt);

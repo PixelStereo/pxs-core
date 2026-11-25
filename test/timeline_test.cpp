@@ -237,6 +237,40 @@ void loopChanges()
     CHECK_EQ(same.repeat, 0);
 }
 
+void actions()
+{
+    Transport t;
+    t.duration = 2;
+    CHECK(t.control(Action::Play)); // from stopped: it starts
+    CHECK(t.state == State::Playing);
+    t.advance(1.5);
+    CHECK(!t.control(Action::Play)); // already playing: from where it is
+    CHECK(near(t.clock, 1.5));
+    CHECK(!t.control(Action::Pause));
+    CHECK(t.state == State::Paused);
+    CHECK(!t.control(Action::Pause)); // paused stays paused
+    CHECK(!t.control(Action::Play));
+    CHECK(near(t.clock, 1.5)); // a pause goes on from where it was
+    CHECK(t.control(Action::Rewind));
+    CHECK(near(t.clock, 0) && t.state == State::Playing);
+    t.clock = 1;
+    CHECK(!t.control(Action::Stop));
+    CHECK(t.state == State::Stopped && near(t.clock, 0));
+    CHECK(t.control(Action::Seek, 1.25)); // a stopped transport sought: paused there
+    CHECK(t.state == State::Paused && near(t.position(), 1.25));
+    CHECK(!t.control(Action::Seek, 0.5)); // not stopped: no new start
+    t.loop = Loop::Once;
+    CHECK(!t.control(Action::Seek, 99)); // within what it plays
+    CHECK(near(t.clock, 2));
+    CHECK(!t.control(Action::Speed, 20));
+    CHECK(near(t.speed, 10));
+    t.control(Action::Speed, -1);
+    CHECK(near(t.speed, 0));
+    t.state = State::Stopped;
+    t.control(Action::LoopMode, 0, Loop::PingPong, 3);
+    CHECK(t.loop == Loop::PingPong && t.repeat == 3);
+}
+
 } // namespace
 
 int main()
@@ -246,5 +280,6 @@ int main()
     curves();
     transport();
     loopChanges();
+    actions();
     return pxs_test::finish("timeline");
 }

@@ -226,6 +226,50 @@ void Transport::setLoop(Loop l, int n)
     oscillatorOffset = elapsed - std::min(clock, length());
 }
 
+bool Transport::control(Action action, double time, Loop loopMode, int passes)
+{
+    const auto toStart = [this] {
+        clock = 0;
+        oscillatorOffset = 0;
+        reversed = false;
+    };
+    switch (action) {
+    case Action::Play: {
+        const bool fresh = state == State::Stopped;
+        if (fresh) toStart();
+        state = State::Playing;
+        return fresh;
+    }
+    case Action::Pause:
+        if (state == State::Playing) state = State::Paused;
+        return false;
+    case Action::Stop:
+        state = State::Stopped;
+        toStart();
+        return false;
+    case Action::Rewind:
+        toStart();
+        return true;
+    case Action::Seek: {
+        const bool fresh = state == State::Stopped;
+        if (fresh) {
+            state = State::Paused; // stays where it was sought
+            reversed = false;
+        }
+        clock = std::clamp(time, 0.0, std::min(length(), 1e9));
+        oscillatorOffset = 0; // an explicit seek sets the phase
+        return fresh;
+    }
+    case Action::Speed:
+        speed = std::clamp(time, 0.0, 10.0);
+        return false;
+    case Action::LoopMode:
+        setLoop(loopMode, passes);
+        return false;
+    }
+    return false;
+}
+
 bool Transport::advance(double dt)
 {
     clock += std::max(0.0, dt) * speed;
