@@ -450,6 +450,24 @@ void filters()
     pxs_filter_chain_free(nullptr);
 }
 
+void physics()
+{
+    pxs_physics p{};
+    pxs_physics_defaults(&p);
+    CHECK_EQ(p.mode, 0);
+    CHECK_EQ(p.attraction, 120.0);
+    p.mode = 1;
+    p.rate = 10;
+    double pos[] = {0, 0.5}, vel[] = {0, 0};
+    const double target[] = {1, 0.5};
+    CHECK_EQ(pxs_physics_step(pos, vel, target, 2, 0, nullptr, &p, 1, 0.1), 1);
+    CHECK(std::abs(pos[0] - (1 - std::exp(-1.0))) < 1e-9 && pos[1] == 0.5);
+    p.rate = 1000;
+    pxs_physics_clamp(&p);
+    CHECK_EQ(p.rate, 60.0);
+    CHECK_EQ(pxs_physics_step(pos, vel, target, 2, 0, nullptr, nullptr, 0, 0.1), PXS_ERR_ARGUMENT);
+}
+
 } // namespace
 
 int main()
@@ -463,5 +481,6 @@ int main()
     midi();
     websocket();
     filters();
+    physics();
     return pxs_test::finish("c_api");
 }

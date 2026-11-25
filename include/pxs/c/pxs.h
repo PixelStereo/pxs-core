@@ -272,6 +272,22 @@ PXS_API const double *pxs_filter_chain_stage_outputs(const pxs_filter_chain *cha
 PXS_API int pxs_filter_chain_level(const pxs_filter_chain *chain, double *out);
 PXS_API int pxs_filter_chain_curve_input(const pxs_filter_chain *chain, double *out);
 
+/* ---- physics ------------------------------------------------------------------------------------------------------------------ */
+
+/* How a control's numbers move, as pxs/core/physics/physics.h has it: mode 0 none (where the hand is), 1 Interpolate, 2 Mass-Spring. */
+typedef struct pxs_physics {
+    int32_t mode;
+    double friction, attraction, tension, wall, rate;
+} pxs_physics;
+
+PXS_API void pxs_physics_defaults(pxs_physics *out);
+PXS_API void pxs_physics_clamp(pxs_physics *settings); /* each setting within its range, the mode one of the three */
+/* One step of `dt` seconds of `count` numbers, each in the 0..1 of its range: `pos` and `vel` are moved in place towards `target`. `held`:
+ * the hand is on the control; `hand` (NULL: all of them) says which numbers it holds. Number i moves by each[i], by the last one when
+ * there are fewer. 1 while something still moves, 0 when all is still, or a status. */
+PXS_API int pxs_physics_step(double *pos, double *vel, const double *target, size_t count, int held, const uint8_t *hand,
+                             const pxs_physics *each, size_t each_count, double dt);
+
 /* ---- WebSocket ---------------------------------------------------------------------------------------------------------------- */
 
 /* The Sec-WebSocket-Accept of a handshake, from the client's Sec-WebSocket-Key (free the string). */

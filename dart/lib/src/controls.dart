@@ -170,3 +170,72 @@ class PxsFilterChain implements ffi.Finalizable {
     _b.pxs_filter_chain_free(_chain);
   }
 }
+
+/// How a control's numbers move (pxs/core/physics/physics.h): [none] where the hand is, [interpolate] glides to it, [massSpring] is
+/// attracted to the finger and, let go, goes on with the push it got (thrown, it bounces on the ends; with a tension, it is pulled back).
+class PxsPhysics {
+  const PxsPhysics({
+    this.mode = none,
+    this.friction = 5,
+    this.attraction = 120,
+    this.tension = 0,
+    this.wall = 0.6,
+    this.rate = 12,
+  });
+
+  static const none = 0, interpolate = 1, massSpring = 2;
+  static const frictionMax = 30.0, attractionMax = 400.0, tensionMax = 400.0, wallMax = 1.0, rateMin = 0.5, rateMax = 60.0;
+
+  final int mode;
+  final double friction, attraction, tension, wall, rate;
+
+  /// Each setting within its range, the mode one of the three.
+  PxsPhysics clamped() => using((arena) {
+        final p = arena<pxs_physics>();
+        _write(p.ref);
+        Pxs.bindings.pxs_physics_clamp(p);
+        return _read(p.ref);
+      });
+
+  void _write(pxs_physics o) {
+    o.mode = mode;
+    o.friction = friction;
+    o.attraction = attraction;
+    o.tension = tension;
+    o.wall = wall;
+    o.rate = rate;
+  }
+
+  static PxsPhysics _read(pxs_physics p) => PxsPhysics(
+      mode: p.mode, friction: p.friction, attraction: p.attraction, tension: p.tension, wall: p.wall, rate: p.rate);
+
+  /// One step of [dt] seconds: [pos] and [vel] (one per number, 0..1 of its range) move towards [target], in place. [held]: the hand is
+  /// on the control; [hand] (null: all) which numbers it holds. Number i moves by [each][i], by the last one when there are fewer. True
+  /// while something still moves.
+  static bool step(List<double> pos, List<double> vel, List<double> target, List<PxsPhysics> each, double dt,
+      {bool held = false, List<bool>? hand}) {
+    final n = pos.length;
+    if (vel.length != n || target.length != n || each.isEmpty) throw ArgumentError('one position, speed and target per number');
+    return using((arena) {
+      final p = arena<ffi.Double>(n == 0 ? 1 : n), v = arena<ffi.Double>(n == 0 ? 1 : n), t = arena<ffi.Double>(n == 0 ? 1 : n);
+      final h = hand == null ? ffi.nullptr : arena<ffi.Uint8>(n == 0 ? 1 : n);
+      for (var i = 0; i < n; i++) {
+        p[i] = pos[i];
+        v[i] = vel[i];
+        t[i] = target[i];
+        if (hand != null) h[i] = i < hand.length && hand[i] ? 1 : 0;
+      }
+      final s = arena<pxs_physics>(each.length);
+      for (var i = 0; i < each.length; i++) {
+        each[i]._write((s + i).ref);
+      }
+      final r = Pxs.bindings.pxs_physics_step(p, v, t, n, held ? 1 : 0, h.cast(), s, each.length, dt);
+      if (r < 0) throw PxsException(r, 'physics');
+      for (var i = 0; i < n; i++) {
+        pos[i] = p[i];
+        vel[i] = v[i];
+      }
+      return r == 1;
+    });
+  }
+}

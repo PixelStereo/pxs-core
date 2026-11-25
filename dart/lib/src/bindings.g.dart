@@ -672,6 +672,86 @@ class PxsBindings {
         )
       >();
 
+  void pxs_physics_clamp(ffi.Pointer<pxs_physics> settings) {
+    return _pxs_physics_clamp(settings);
+  }
+
+  late final _pxs_physics_clampPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_physics>)>>(
+        'pxs_physics_clamp',
+      );
+  late final _pxs_physics_clamp = _pxs_physics_clampPtr
+      .asFunction<void Function(ffi.Pointer<pxs_physics>)>();
+
+  void pxs_physics_defaults(ffi.Pointer<pxs_physics> out) {
+    return _pxs_physics_defaults(out);
+  }
+
+  late final _pxs_physics_defaultsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<pxs_physics>)>>(
+        'pxs_physics_defaults',
+      );
+  late final _pxs_physics_defaults = _pxs_physics_defaultsPtr
+      .asFunction<void Function(ffi.Pointer<pxs_physics>)>();
+
+  /// One step of `dt` seconds of `count` numbers, each in the 0..1 of its range: `pos` and `vel` are moved in place towards `target`. `held`:
+  /// the hand is on the control; `hand` (NULL: all of them) says which numbers it holds. Number i moves by each[i], by the last one when
+  /// there are fewer. 1 while something still moves, 0 when all is still, or a status.
+  int pxs_physics_step(
+    ffi.Pointer<ffi.Double> pos,
+    ffi.Pointer<ffi.Double> vel,
+    ffi.Pointer<ffi.Double> target,
+    int count,
+    int held,
+    ffi.Pointer<ffi.Uint8> hand,
+    ffi.Pointer<pxs_physics> each,
+    int each_count,
+    double dt,
+  ) {
+    return _pxs_physics_step(
+      pos,
+      vel,
+      target,
+      count,
+      held,
+      hand,
+      each,
+      each_count,
+      dt,
+    );
+  }
+
+  late final _pxs_physics_stepPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Double>,
+            ffi.Pointer<ffi.Double>,
+            ffi.Pointer<ffi.Double>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<pxs_physics>,
+            ffi.Size,
+            ffi.Double,
+          )
+        >
+      >('pxs_physics_step');
+  late final _pxs_physics_step = _pxs_physics_stepPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Double>,
+          ffi.Pointer<ffi.Double>,
+          ffi.Pointer<ffi.Double>,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<pxs_physics>,
+          int,
+          double,
+        )
+      >();
+
   /// Presets: the values of every parameter that is saved, as JSON text (free it); and put back from such a text. Returns the number of values
   /// written, or a negative status.
   ffi.Pointer<ffi.Char> pxs_preset_capture(
@@ -1556,6 +1636,43 @@ enum pxs_param_type {
     5 => PXS_PARAM_TRIGGER,
     _ => throw ArgumentError('Unknown value for pxs_param_type: $value'),
   };
+}
+
+/// How a control's numbers move, as pxs/core/physics/physics.h has it: mode 0 none (where the hand is), 1 Interpolate, 2 Mass-Spring.
+final class pxs_physics extends ffi.Struct {
+  @ffi.Int32()
+  external int mode;
+
+  @ffi.Double()
+  external double friction;
+
+  @ffi.Double()
+  external double attraction;
+
+  @ffi.Double()
+  external double tension;
+
+  @ffi.Double()
+  external double wall;
+
+  @ffi.Double()
+  external double rate;
+
+  static ffi.Pointer<pxs_physics> $allocate(
+    ffi.Allocator $allocator, {
+    required int mode,
+    required double friction,
+    required double attraction,
+    required double tension,
+    required double wall,
+    required double rate,
+  }) => $allocator<pxs_physics>()
+    ..ref.mode = mode
+    ..ref.friction = friction
+    ..ref.attraction = attraction
+    ..ref.tension = tension
+    ..ref.wall = wall
+    ..ref.rate = rate;
 }
 
 /// What an OSCQuery device answers to GET /, kept as a tree to browse and read. The sockets are the caller's (HTTP, WebSocket LISTEN, UDP): this

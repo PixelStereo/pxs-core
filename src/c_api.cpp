@@ -2,6 +2,7 @@
 
 #include <pxs/core/dmx/frame.h>
 #include <pxs/core/filter/filter.h>
+#include <pxs/core/physics/physics.h>
 #include <pxs/core/midi/message.h>
 #include <pxs/core/osc/codec.h>
 #include <pxs/core/tree/oscquery_server.h>
@@ -711,6 +712,54 @@ int pxs_filter_chain_curve_input(const pxs_filter_chain *chain, double *out)
     const auto v = chain->chain.curveInput();
     if (v) *out = *v;
     return v ? 1 : 0;
+}
+
+// ---- physics ----
+
+namespace {
+pxs::core::physics::Settings fromC(const pxs_physics &p)
+{
+    pxs::core::physics::Settings s;
+    s.mode = p.mode;
+    s.friction = p.friction;
+    s.attraction = p.attraction;
+    s.tension = p.tension;
+    s.wall = p.wall;
+    s.rate = p.rate;
+    return s;
+}
+pxs_physics toC(const pxs::core::physics::Settings &s) { return pxs_physics{s.mode, s.friction, s.attraction, s.tension, s.wall, s.rate}; }
+} // namespace
+
+void pxs_physics_defaults(pxs_physics *out)
+{
+    if (out) *out = toC(pxs::core::physics::Settings{});
+}
+
+void pxs_physics_clamp(pxs_physics *settings)
+{
+    if (settings) *settings = toC(fromC(*settings).clamped());
+}
+
+int pxs_physics_step(double *pos, double *vel, const double *target, size_t count, int held, const uint8_t *hand, const pxs_physics *each,
+                     size_t each_count, double dt)
+{
+    if (count && (!pos || !vel || !target)) return PXS_ERR_ARGUMENT;
+    if (!each || each_count == 0) return PXS_ERR_ARGUMENT;
+    PXS_TRY(PXS_ERR_INTERNAL, {
+        pxs::core::physics::Body b;
+        b.pos.assign(pos, pos + count);
+        b.vel.assign(vel, vel + count);
+        b.target.assign(target, target + count);
+        b.held = held != 0;
+        if (hand) b.hand.assign(hand, hand + count);
+        std::vector<pxs::core::physics::Settings> settings(each_count);
+        for (size_t i = 0; i < each_count; ++i) settings[i] = fromC(each[i]);
+        const bool moving = pxs::core::physics::step(b, settings.data(), settings.size(), dt);
+        std::copy(b.pos.begin(), b.pos.end(), pos);
+        std::copy(b.vel.begin(), b.vel.end(), vel);
+        return moving ? 1 : 0;
+    })
 }
 
 // ---- WebSocket ----
