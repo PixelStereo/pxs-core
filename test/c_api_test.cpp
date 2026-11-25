@@ -404,9 +404,10 @@ void websocket()
 
 void filters()
 {
-    CHECK_EQ(pxs_filter_count(), 18);
+    CHECK_EQ(pxs_filter_count(), 19);
     CHECK(std::string(pxs_filter_key(17)) == "return");
-    CHECK(pxs_filter_key(18) == nullptr && pxs_filter_name(-1) == nullptr);
+    CHECK(std::string(pxs_filter_key(18)) == "physics");
+    CHECK(pxs_filter_key(19) == nullptr && pxs_filter_name(-1) == nullptr);
     CHECK_EQ(pxs_filter_from_key("damper"), 4);
     CHECK_EQ(pxs_filter_from_key("nothing"), PXS_ERR_NOT_FOUND);
     CHECK(std::string(pxs_filter_group(4)) == "Smoothing");

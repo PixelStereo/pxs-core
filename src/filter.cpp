@@ -30,6 +30,8 @@ const KindInfo kKinds[kKindCount] = {
     {"hold", "Hold", "Timing", "A fall is held for a time before it follows."},
     {"debounce", "Debounce", "Timing", "Follows once the value has stopped changing for a time: a flicker is ignored."},
     {"return", "Auto Return", "Timing", "Leaves its rest value for a time, then goes back to it."},
+    {"physics", "Physics", "Smoothing",
+     "A mass on a spring, in 0 to 1: pulled to the value while it comes; when the source goes quiet it goes on by itself and bounces on 0 and 1."},
 };
 
 struct OpInfo {
@@ -126,6 +128,11 @@ Setting setting(Kind k, int which)
     case Kind::Hold: return two({"Hold", s, 0, 10, 0.5});
     case Kind::Debounce: return two({"Settle", s, 0, 10, 0.1});
     case Kind::AutoReturn: return two({"After", s, 0.01, 60, 1}, {"Back to", "", -1000, 1000, 0});
+    case Kind::Physics: {
+        const Setting settings[4] = {{"Friction", " /s", 0, physics::kFrictionMax, 5}, {"Attraction", "", 0, physics::kAttractionMax, 120},
+                                     {"Tension", "", 0, physics::kTensionMax, 0}, {"Bounce", "", 0, physics::kWallMax, 0.6}};
+        return which >= 0 && which < 4 ? settings[which] : Setting{};
+    }
     case Kind::Envelope: {
         // The defaults are an impact: a hit at once, gone in a third of a second. Sustain above 0 holds while the trigger is held
         const Setting e[] = {{"Attack", s, 0.001, 5, 0.005}, {"Decay", s, 0.001, 10, 0.3}, {"Sustain", "", 0, 1, 0}, {"Release", s, 0.001, 10, 0.3}};
@@ -207,6 +214,11 @@ std::optional<double> Chain::step(const StageView *stages, std::size_t count, do
             st.y = f.kind == Kind::PulseDetection || f.kind == Kind::Speed || f.kind == Kind::Envelope ? 0.0 : x;
             st.slow = st.prev = x;
             st.v = 0;
+            if (f.kind == Kind::Physics) {
+                st.body = physics::Body{};
+                st.body.pos = st.body.target = {std::clamp(x, 0.0, 1.0)};
+                st.body.vel = {0.0};
+            }
             // a Toggle: off, its first press turns it on; an Envelope: a trigger held at the start fires it
             st.high = f.kind != Kind::Toggle && f.kind != Kind::Envelope && f.kind != Kind::AutoReturn && x >= f.a;
             st.started = true;
@@ -369,6 +381,22 @@ std::optional<double> Chain::step(const StageView *stages, std::size_t count, do
             if (above && !st.high) st.v = st.v > 0.5 ? 0.0 : 1.0;
             st.high = above;
             y = st.v;
+            break;
+        }
+        case Kind::Physics: {
+            // Held to the value while values come (the spring of Attraction), then let go: pulled back to where it last was by Tension (0:
+            // thrown, free), slowed by Friction, bouncing on 0 and 1 with what Bounce keeps of its speed
+            st.quiet = m_fresh ? 0.0 : st.quiet + dt;
+            st.body.held = st.quiet < kPhysicsQuiet;
+            if (st.body.held) st.body.target.assign(1, std::clamp(x, 0.0, 1.0));
+            physics::Settings p;
+            p.mode = physics::Settings::MassSpring;
+            p.friction = f.a;
+            p.attraction = f.b;
+            p.tension = f.c;
+            p.wall = f.d;
+            physics::step(st.body, p.clamped(), dt);
+            y = st.body.pos.empty() ? x : st.body.pos[0];
             break;
         }
         case Kind::Speed: {

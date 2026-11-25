@@ -183,6 +183,61 @@ void triggers()
     CHECK_EQ(last, 0.0); // a sustain of 0: a pulse that ends by itself
 }
 
+void physicsFilter()
+{
+    const Setting friction = setting(Kind::Physics, 0), bounce = setting(Kind::Physics, 3);
+    CHECK(std::string(friction.name) == "Friction" && std::string(bounce.name) == "Bounce");
+    CHECK(std::string(key(Kind::Physics)) == "physics" && std::string(group(Kind::Physics)) == "Smoothing");
+
+    // Held while values come: pulled to the value, it gets there
+    Stage s = Stage::made(Kind::Physics);
+    std::vector<Stage> stages{s};
+    Chain c;
+    c.input(0.2);
+    CHECK(near(*c.step(stages, 0.016), 0.2)); // starts where its input is
+    double y = 0;
+    for (int i = 0; i < 300; ++i) {
+        c.input(0.8);
+        y = *c.step(stages, 0.016);
+    }
+    CHECK(near(y, 0.8, 1e-3));
+
+    // Thrown: a fast rise, then the source goes quiet. With no tension it goes on past where the value stopped, hits 1, comes back
+    // off the wall and stays within 0..1
+    Chain t;
+    stages[0].c = 0;   // tension: free
+    stages[0].a = 0.5; // little friction
+    double peak = 0, lowAfterPeak = 1;
+    for (int i = 0; i < 20; ++i) {
+        t.input(0.05 * i); // up to 0.95, fast
+        y = *t.step(stages, 0.016);
+    }
+    for (int i = 0; i < 200; ++i) {
+        y = *t.step(stages, 0.016); // nothing comes
+        CHECK(y >= 0.0 && y <= 1.0);
+        if (y > peak) peak = y;
+        if (peak >= 1.0) lowAfterPeak = std::min(lowAfterPeak, y);
+    }
+    CHECK(near(peak, 1.0));      // went on to the wall
+    CHECK(lowAfterPeak < 0.999); // and came back off it
+
+    // With tension, let go, it is pulled back to where the value last was
+    Chain back;
+    stages[0] = Stage::made(Kind::Physics);
+    stages[0].c = 200;
+    for (int i = 0; i < 20; ++i) {
+        back.input(0.03 * i);
+        y = *back.step(stages, 0.016);
+    }
+    for (int i = 0; i < 600; ++i) y = *back.step(stages, 0.016);
+    CHECK(near(y, 0.57, 2e-3));
+
+    // Out of 0..1: held within it
+    Chain out;
+    out.input(3);
+    CHECK(near(*out.step(stages, 0.016), 1.0));
+}
+
 void chains()
 {
     Chain c;
@@ -225,6 +280,7 @@ int main()
     smoothing();
     timing();
     triggers();
+    physicsFilter();
     chains();
     return pxs_test::finish("filter");
 }

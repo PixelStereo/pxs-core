@@ -7,6 +7,7 @@
 #include <pxs/core/osc/names.h>
 #include <pxs/core/filter/filter.h>
 #include <pxs/core/physics/physics.h>
+#include <pxs/core/device/device.h>
 #include <pxs/core/timeline/timeline.h>
 #include <pxs/core/tree/oscquery.h>
 #include <pxs/core/tree/oscquery_server.h>
