@@ -289,7 +289,11 @@ std::uint64_t Registry::idFor(const std::string &key)
 {
     const auto it = m_ids.find(key);
     if (it != m_ids.end()) return it->second;
-    while (m_devices.count(m_next)) ++m_next;
+    for (bool used = true; used;) {
+        used = m_devices.count(m_next) > 0;
+        for (const auto &[k, id] : m_ids) used = used || id == m_next;
+        if (used) ++m_next;
+    }
     m_ids[key] = m_next;
     return m_next++;
 }
@@ -378,15 +382,22 @@ bool Registry::fromJson(const std::string &json)
         if (list.is_array())
             for (const Json &e : list)
                 if (auto d = deviceFrom(e)) devices.push_back(std::move(*d));
-        // Replaces the devices made by hand; the ones found on the network stay
-        for (auto it = m_devices.begin(); it != m_devices.end();) it = it->second.manual ? m_devices.erase(it) : std::next(it);
+        // Replaces the devices made by hand; the ones found on the network stay, with the id the text keeps for them (or a new one)
+        std::vector<Device> found;
+        for (auto &[id, d] : m_devices)
+            if (!d.manual) found.push_back(std::move(d));
+        m_devices.clear();
         m_ids = std::move(ids);
         m_last.clear();
         m_next = 1;
         for (const auto &[k, id] : m_ids) m_next = std::max(m_next, id + 1);
-        for (const auto &[id, d] : m_devices) m_ids[d.key()] = id;
         for (Device &d : devices) {
             d.manual = true;
+            if (d.id && m_devices.count(d.id)) d.id = 0; // twice the same id in the text: the second takes its key's
+            put(std::move(d));
+        }
+        for (Device &d : found) {
+            d.id = 0;
             put(std::move(d));
         }
         return true;

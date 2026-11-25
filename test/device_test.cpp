@@ -195,6 +195,22 @@ void registry()
     next.name = "New";
     CHECK(other.put(next) == 3); // past every id kept
     CHECK(!other.fromJson("[]") && other.size() == 3); // not a registry: nothing changes
+
+    // Read into a registry that already found a device on the network: it takes the id the text keeps for it, not one of the text's
+    Registry running;
+    Device elsewhere;
+    elsewhere.kind = Kind::OscQuery;
+    elsewhere.name = "Lights";
+    elsewhere.manual = false;
+    CHECK(running.put(elsewhere) == 1); // 1 is the Mixer's in the text
+    CHECK(running.put(found) == 2);     // 2 is Video's in the text too
+    CHECK(running.fromJson(saved));
+    CHECK(running.find(id) && running.find(id)->name == "Mixer");
+    CHECK(running.find(vid) && running.find(vid)->name == "Video");
+    const Device *lights = nullptr;
+    for (const Device *d : running.all())
+        if (d->name == "Lights") lights = d;
+    CHECK(lights && lights->id != id && lights->id != vid && running.size() == 3);
 }
 
 } // namespace
