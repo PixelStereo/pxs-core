@@ -3,6 +3,23 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.13.0
+
+### Added
+- **Filters** (`pxs/core/filter/filter.h`, the module `pxs-core::filter`): a value through a chain of stages, frame by frame, each on or off.
+  The 18 filters of NyxMap's interactions (Average, Weighted Average, Attack Release, Damper; Curve, Math, Clamp, Steps, Remap, Threshold;
+  Delay, Hold, Debounce, Auto Return, Speed; Toggle, Pulse Detection, Envelope), their settings (names, ranges, defaults), the keys they
+  are saved under, their groups and descriptions, the Math operations, and the state each keeps between frames (`Chain`). Moved from
+  pxs-qt's `InteractionProcessor`, whose tests and NyxMap's pass unchanged on it; `StageView` lets an application hand its own stages
+  over each frame without copying a curve. A Curve filter's keys are `pxs-core::timeline`'s.
+- **Physics** (`pxs/core/physics/physics.h`, the module `pxs-core::physics`): a control's numbers moved by the hand, Interpolate and
+  Mass-Spring (attraction, tension, friction, the bounce on the ends of the range), with the ranges of the settings. Moved from pxs-qt's
+  controls; it takes plain values per number (which control and which range stay the application's).
+- **C interface and Dart**: `pxs_filter_*`, `pxs_filter_chain_*`, `pxs_math_op_*`, `pxs_curve_at` and `pxs_physics_*`; `PxsFilters`,
+  `PxsFilterChain` (freed by a `NativeFinalizer` when forgotten) and `PxsPhysics` in the Dart package. OSCQontrol's own Dart filters and
+  physics gave the same values as these (within 1e-9, every filter and mode, Bézier curves included) before it moved to them. The C
+  interface grows by adding (`PXS_C_API_VERSION` stays 1); `bindings.g.dart` is regenerated.
+
 ## 0.12.0
 
 ### Added
