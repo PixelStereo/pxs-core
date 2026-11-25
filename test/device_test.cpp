@@ -213,6 +213,30 @@ void registry()
     CHECK(lights && lights->id != id && lights->id != vid && running.size() == 3);
 }
 
+void renamed()
+{
+    Registry r;
+    Device a;
+    a.kind = Kind::Dmx;
+    a.name = "A";
+    const auto first = r.put(a);
+    Device b = *r.find(first);
+    b.name = "B"; // renamed
+    CHECK(r.put(b) == first);
+    const auto second = r.put(a); // a new "A"
+    CHECK(second != first && r.size() == 2 && r.find(first) && r.find(first)->name == "B");
+    const std::string saved = r.toJson();
+    CHECK(saved.find("\"dmx:A\":" + std::to_string(second)) != std::string::npos);
+    CHECK(saved.find("\"dmx:B\":" + std::to_string(first)) != std::string::npos);
+    CHECK(saved.find("\"dmx:A\":" + std::to_string(first)) == std::string::npos);
+
+    // A text that kept an old key for an id now another device's: that key gets a new id
+    Registry stale;
+    CHECK(stale.fromJson("{\"devices\":[{\"id\":1,\"kind\":\"dmx\",\"name\":\"B\"}],\"ids\":{\"dmx:A\":1,\"dmx:B\":1}}"));
+    const auto again = stale.put(a);
+    CHECK(again != 1 && stale.find(1) && stale.find(1)->name == "B");
+}
+
 } // namespace
 
 int main()
@@ -224,5 +248,6 @@ int main()
     checks();
     json();
     registry();
+    renamed();
     return pxs_test::finish("device");
 }

@@ -288,7 +288,11 @@ std::optional<Device> fromJson(const std::string &json)
 std::uint64_t Registry::idFor(const std::string &key)
 {
     const auto it = m_ids.find(key);
-    if (it != m_ids.end()) return it->second;
+    if (it != m_ids.end()) {
+        const auto held = m_devices.find(it->second);
+        if (held == m_devices.end() || held->second.key() == key) return it->second;
+        m_ids.erase(it); // its id is another device's now: a new one
+    }
     for (bool used = true; used;) {
         used = m_devices.count(m_next) > 0;
         for (const auto &[k, id] : m_ids) used = used || id == m_next;
@@ -302,6 +306,8 @@ std::uint64_t Registry::put(Device d)
 {
     if (d.id == 0) d.id = idFor(d.key());
     else {
+        // One key for each id: a device renamed (or moved, an OSCQuery device added by hand) leaves its old key, which a new device may take
+        for (auto it = m_ids.begin(); it != m_ids.end();) it = it->second == d.id && it->first != d.key() ? m_ids.erase(it) : std::next(it);
         m_ids[d.key()] = d.id;
         m_next = std::max(m_next, d.id + 1);
     }
