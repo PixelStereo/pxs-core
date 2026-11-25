@@ -3,7 +3,7 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
-## Unreleased
+## 0.12.0
 
 ### Added
 - **Timelines** (`pxs/core/timeline/timeline.h`, the module `pxs-core::timeline`): numbers drawn over time, the logic only. The keys of a
