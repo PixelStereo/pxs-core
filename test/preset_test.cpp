@@ -136,6 +136,38 @@ void jsonRoundTrip()
     CHECK_EQ(Preset().toJson(), std::string("{\"values\":{}}"));
 }
 
+void timingAndStepOverridesSurviveRecall()
+{
+    Show s;
+    s.level.value = Value(0.0);
+    Preset preset;
+    preset.id = "34";
+    preset.values["/level"] = "[0.8]";
+    preset.fade = 4;
+    preset.times["/level"] = 2;
+    preset.delays["/level"] = 1;
+    const auto loaded = Preset::fromJson(preset.toJson());
+    CHECK_EQ(loaded.id, preset.id);
+    CHECK_EQ(loaded.duration(), 3.0);
+
+    Preset overrides;
+    overrides.values["/level"] = "[1.0]";
+    overrides.delays["/level"] = 0; // explicit zero overrides the preset
+    PresetPlayback playback;
+    const auto cue = loaded.resolved(overrides, 5);
+    CHECK_EQ(cue.duration(), 2.0); // the parameter's own time still wins
+    playback.start(s.tree, cue);
+    playback.advance(s.tree, 0.5);
+    CHECK(s.level.value == Value(0.25));
+    playback.finish(s.tree);
+    CHECK(s.level.value == Value(1.0));
+
+    overrides.delays.clear();
+    playback.start(s.tree, loaded.resolved(overrides));
+    playback.advance(s.tree, 0.5);
+    CHECK(s.level.value == Value(1.0));
+}
+
 void readingIsTolerant()
 {
     for (const char *bad : {"", "not json", "[1,2]", "42", "null", "{\"values\":3}", "{\"values\":[1]}"}) {
@@ -183,6 +215,7 @@ int main()
     lockedAndMissingAreCounted();
     aValueThatDoesNotFitIsCountedAsMissing();
     jsonRoundTrip();
+    timingAndStepOverridesSurviveRecall();
     readingIsTolerant();
     nestedArraysAreFlattened();
     presetsWithBadTextDoNotThrow();

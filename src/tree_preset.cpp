@@ -166,7 +166,10 @@ double timing(const std::map<std::string, double> &fields, std::string path, dou
 {
     for (;;) {
         if (auto it = fields.find(path); it != fields.end()) return it->second;
-        if (path.empty()) return fallback;
+        if (path.empty()) {
+            const auto root = fields.find("/");
+            return root == fields.end() ? fallback : root->second;
+        }
         path.resize(path.rfind('/') == std::string::npos ? 0 : path.rfind('/'));
     }
 }
