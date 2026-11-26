@@ -232,6 +232,17 @@ bool Tree::changed(const std::string &path) const
     return true;
 }
 
+bool Tree::fireIfChanged(const std::string &path, const ValueList &args) const
+{
+    const Node *node = find(path);
+    if (!node || node->m_kind != Kind::Signal || node->isContainer()) return false;
+    if (node->type == "N") return fire(path, args); // an impulse: every one of them is one
+    auto &last = m_fired[path];
+    if (last == args) return false; // the same as what it said last: not again
+    last = args;
+    return fire(path, args);
+}
+
 Node *Tree::find(const std::string &path) const
 {
     const Node *node = &m_root;
@@ -248,6 +259,11 @@ bool Tree::remove(const std::string &path)
     if (!node || !node->m_parent) return false;
     const std::string removedPath = node->path();
     const bool removed = node->m_parent->m_children.erase(node->m_name) > 0;
+    if (removed) { // what it fired last is not what it will fire first, when it comes back
+        m_fired.erase(removedPath);
+        for (auto it = m_fired.lower_bound(removedPath + '/'); it != m_fired.end() && it->first.compare(0, removedPath.size() + 1, removedPath + '/') == 0;)
+            it = m_fired.erase(it);
+    }
     if (removed && m_structure) m_structure(removedPath, Change::Removed);
     return removed;
 }
@@ -256,6 +272,7 @@ void Tree::clear()
 {
     m_root.m_children.clear();
     m_root.description.clear();
+    m_fired.clear();
     if (m_structure) m_structure("/", Change::Cleared);
 }
 

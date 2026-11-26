@@ -6,6 +6,9 @@ decoder accepts is breaking unless it only makes a decoder stricter for packets 
 ## 0.14.0
 
 ### Added
+- **`Tree::fireIfChanged`** (`pxs/core/tree/tree.h`): a valued signal fired only when its arguments differ from what it fired last, for
+  signals a tick says again and again (a progress, a level) — the OSC output and the observers are not told the same value twice. An
+  impulse (type `N`) fires every time, as it should. What was fired last is forgotten when the node is removed, or the tree cleared.
 - **Devices** (`pxs/core/device/device.h`, the module `pxs-core::device`): what an application drives, the same in every application, from
   OSCQlock's destinations. A device is an OSCQuery device, a plain OSC receiver, a DMX fixture or a MIDI instrument, with the addresses it
   takes (a path and a range). What a value is on its wire: an OSC message of the address's tag (f, d, i, h, T); DMX on 8 bits, or 16 on two
