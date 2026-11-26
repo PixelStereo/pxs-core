@@ -24,6 +24,8 @@ struct Preset {
     };
 
     std::string name;
+    std::string scope; // selected capture scope in the preset library
+    std::map<std::string, std::string> timelines; // stable timeline id -> JSON definition, restored by the application's timeline host
     std::map<std::string, std::string> values; // address -> its VALUE, a JSON array (one entry per argument)
     std::vector<Action> actions;               // done after the values, in this order
 
@@ -37,7 +39,7 @@ struct Preset {
     Preset resolved(const Preset &overrides, double fadeOverride = -1) const;
     double duration() const;
 
-    bool isEmpty() const { return values.empty() && actions.empty(); }
+    bool isEmpty() const { return values.empty() && actions.empty() && timelines.empty(); }
     // The preset as JSON text, and back (a text that is not a JSON object, or members of another type, give what could be read)
     std::string toJson() const;
     static Preset fromJson(const std::string &json);

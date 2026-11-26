@@ -76,6 +76,11 @@ std::string Preset::toJson() const
     Json o = Json::object();
     o["values"] = v;
     if (!id.empty()) o["id"] = id;
+    if (!scope.empty()) o["scope"] = scope;
+    for (const auto &[id, definition] : timelines) {
+        const auto data = Json::parse(definition, nullptr, false);
+        if (data.is_object()) o["timelines"][id] = data;
+    }
     if (fade > 0) o["fade"] = fade;
     if (!times.empty()) o["times"] = times;
     if (!delays.empty()) o["delays"] = delays;
@@ -104,6 +109,10 @@ Preset Preset::fromJson(const std::string &text)
             if (field.value().is_number())
                 p.curves[field.key()] = int(std::clamp(field.value().get<double>(), 0.0, double(timeline::kEaseCount - 1)));
     if (const auto it = o.find("name"); it != o.end() && it->is_string()) p.name = it->get<std::string>();
+    if (const auto it = o.find("scope"); it != o.end() && it->is_string()) p.scope = it->get<std::string>();
+    if (const auto it = o.find("timelines"); it != o.end() && it->is_object())
+        for (auto definition = it->begin(); definition != it->end(); ++definition)
+            if (definition.value().is_object()) p.timelines[definition.key()] = definition.value().dump();
     if (const auto it = o.find("values"); it != o.end() && it->is_object())
         for (auto e = it->begin(); e != it->end(); ++e) p.values[e.key()] = e.value().dump(-1, ' ', false, Json::error_handler_t::replace);
     if (const auto it = o.find("actions"); it != o.end() && it->is_array()) {
