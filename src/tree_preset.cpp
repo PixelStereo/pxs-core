@@ -77,9 +77,9 @@ std::string Preset::toJson() const
     o["values"] = v;
     if (!id.empty()) o["id"] = id;
     if (!scope.empty()) o["scope"] = scope;
-    for (const auto &[id, definition] : timelines) {
+    for (const auto &[timelineId, definition] : timelines) {
         const auto data = Json::parse(definition, nullptr, false);
-        if (data.is_object()) o["timelines"][id] = data;
+        if (data.is_object()) o["timelines"][timelineId] = data;
     }
     if (fade > 0) o["fade"] = fade;
     if (!times.empty()) o["times"] = times;
