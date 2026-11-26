@@ -28,6 +28,7 @@ namespace pxs::core::device {
 
 enum class Kind { OscQuery = 0, Osc, Dmx, Midi };
 inline constexpr int kKindCount = 4;
+std::string namespaceSegment(std::string_view name);
 const char *key(Kind k);  // as saved: "oscquery", "osc", "dmx", "midi"
 const char *name(Kind k); // "OSCQuery", "OSC", "DMX", "MIDI"
 std::optional<Kind> kindFromKey(std::string_view key);

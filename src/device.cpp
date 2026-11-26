@@ -153,6 +153,23 @@ const Address *Device::address(std::string_view path) const
     return nullptr;
 }
 
+std::string namespaceSegment(std::string_view name)
+{
+    std::string segment;
+    bool separator = false;
+    for (char c : name) {
+        if (c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a');
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || static_cast<unsigned char>(c) >= 128) {
+            if (separator && !segment.empty()) segment += '-';
+            segment += c;
+            separator = false;
+        } else separator = true;
+    }
+    if (segment.empty()) return "device";
+    if (segment.find_first_not_of("0123456789") == std::string::npos) return "device-" + segment;
+    return segment;
+}
+
 std::string Device::key() const
 {
     std::string k = std::string(device::key(kind)) + ":";
