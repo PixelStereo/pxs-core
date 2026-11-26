@@ -29,6 +29,10 @@ struct Preset {
 
     double fade = 0;
     std::map<std::string, double> times, delays;
+    std::map<std::string, int> curves;
+    double timeAt(const std::string &path, double fadeOverride = -1) const;
+    double delayAt(const std::string &path) const;
+    int curveAt(const std::string &path) const;
     std::string id;
     Preset resolved(const Preset &overrides, double fadeOverride = -1) const;
     double duration() const;
@@ -58,12 +62,15 @@ public:
     void start(Tree &tree, const Preset &preset);
     void advance(Tree &tree, double seconds);
     void finish(Tree &tree);
+    bool active() const { return !m_jobs.empty(); }
     void clear() { m_jobs.clear(); }
 
 private:
     struct Job {
         std::string from, to;
-        double delay, time, elapsed = 0;
+        double delay, time;
+        int curve;
+        double elapsed = 0;
     };
     std::map<std::string, Job> m_jobs;
 };

@@ -72,7 +72,7 @@ pxs_core_module(tree
             include/pxs/core/tree/oscquery.h include/pxs/core/tree/oscquery_server.h include/pxs/core/tree/preset.h include/pxs/core/tree/remote.h)
 # nlohmann/json is used inside the library only: its include path is private and none of its types is in a public header.
 target_include_directories(pxs_core_tree SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
-target_link_libraries(pxs_core_tree PUBLIC pxs-core::osc pxs-core::value pxs-core::feed)
+target_link_libraries(pxs_core_tree PUBLIC pxs-core::osc pxs-core::value pxs-core::feed PRIVATE pxs-core::timeline)
 
 pxs_core_module(midi
     SOURCES src/midi_message.cpp

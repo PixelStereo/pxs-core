@@ -1,4 +1,5 @@
 #include <pxs/core/tree/preset.h>
+#include <pxs/core/timeline/timeline.h>
 
 #include <nlohmann/json.hpp>
 
@@ -78,6 +79,7 @@ std::string Preset::toJson() const
     if (fade > 0) o["fade"] = fade;
     if (!times.empty()) o["times"] = times;
     if (!delays.empty()) o["delays"] = delays;
+    if (!curves.empty()) o["curves"] = curves;
     if (!name.empty()) o["name"] = name;
     if (!list.empty()) o["actions"] = list;
     return o.dump(-1, ' ', false, Json::error_handler_t::replace);
@@ -97,6 +99,10 @@ Preset Preset::fromJson(const std::string &text)
             for (auto field = fields->begin(); field != fields->end(); ++field)
                 if (field.value().is_number()) (*entry.second)[field.key()] = seconds(field.value());
     }
+    if (const auto it = o.find("curves"); it != o.end() && it->is_object())
+        for (auto field = it->begin(); field != it->end(); ++field)
+            if (field.value().is_number())
+                p.curves[field.key()] = int(std::clamp(field.value().get<double>(), 0.0, double(timeline::kEaseCount - 1)));
     if (const auto it = o.find("name"); it != o.end() && it->is_string()) p.name = it->get<std::string>();
     if (const auto it = o.find("values"); it != o.end() && it->is_object())
         for (auto e = it->begin(); e != it->end(); ++e) p.values[e.key()] = e.value().dump(-1, ' ', false, Json::error_handler_t::replace);
@@ -162,7 +168,8 @@ RecallResult recall(Tree &tree, const Preset &preset)
 }
 
 namespace {
-double timing(const std::map<std::string, double> &fields, std::string path, double fallback)
+template <class T>
+T timing(const std::map<std::string, T> &fields, std::string path, T fallback)
 {
     for (;;) {
         if (auto it = fields.find(path); it != fields.end()) return it->second;
@@ -182,16 +189,21 @@ Preset Preset::resolved(const Preset &overrides, double fadeOverride) const
     for (auto &[path, value] : result.values) {
         if (auto it = overrides.values.find(path); it != overrides.values.end()) value = it->second;
         result.times[path] = timing(overrides.times, path, timing(times, path, result.fade));
-        result.delays[path] = timing(overrides.delays, path, timing(delays, path, 0));
+        result.delays[path] = timing(overrides.delays, path, delayAt(path));
+        result.curves[path] = timing(overrides.curves, path, curveAt(path));
     }
     return result;
 }
+
+double Preset::timeAt(const std::string &path, double fadeOverride) const { return timing(times, path, fadeOverride >= 0 ? fadeOverride : fade); }
+double Preset::delayAt(const std::string &path) const { return timing(delays, path, 0.0); }
+int Preset::curveAt(const std::string &path) const { return timing(curves, path, 0); }
 
 double Preset::duration() const
 {
     double result = 0;
     for (const auto &[path, value] : values)
-        result = std::max(result, timing(times, path, fade) + timing(delays, path, 0));
+        result = std::max(result, timeAt(path) + delayAt(path));
     return result;
 }
 
@@ -203,9 +215,9 @@ void PresetPlayback::start(Tree &tree, const Preset &preset)
         m_jobs.erase(path);
         const Node *node = tree.find(path);
         if (!node || node->locked || !holdable(*node)) continue;
-        const double delay = timing(preset.delays, path, 0), time = timing(preset.times, path, preset.fade);
+        const double delay = preset.delayAt(path), time = preset.timeAt(path);
         if (delay + time <= 0) immediate.values[path] = value;
-        else m_jobs[path] = {delay == 0 ? nodeValueJson(*node) : std::string{}, value, delay, time};
+        else m_jobs[path] = {delay == 0 ? nodeValueJson(*node) : std::string{}, value, delay, time, preset.curveAt(path)};
     }
     recall(tree, immediate);
 }
@@ -229,7 +241,7 @@ void PresetPlayback::advance(Tree &tree, double seconds)
             if (job.from.empty()) job.from = nodeValueJson(*node);
             auto from = arguments(job.from);
             const auto to = arguments(job.to);
-            const double fraction = (job.elapsed - job.delay) / job.time;
+            const double fraction = timeline::ease((job.elapsed - job.delay) / job.time, job.curve);
             const auto a = Json::parse(job.from, nullptr, false), b = Json::parse(job.to, nullptr, false);
             bool numeric = !from.empty() && from.size() == to.size();
             for (size_t i = 0; numeric && i < from.size(); ++i) {
