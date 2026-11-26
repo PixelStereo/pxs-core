@@ -2,6 +2,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
+#include <cmath>
+
 namespace pxs::core::tree {
 
 std::string nodeValueJson(const Node &n); // tree_oscquery.cpp
@@ -71,6 +74,10 @@ std::string Preset::toJson() const
     }
     Json o = Json::object();
     o["values"] = v;
+    if (!id.empty()) o["id"] = id;
+    if (fade > 0) o["fade"] = fade;
+    if (!times.empty()) o["times"] = times;
+    if (!delays.empty()) o["delays"] = delays;
     if (!name.empty()) o["name"] = name;
     if (!list.empty()) o["actions"] = list;
     return o.dump(-1, ' ', false, Json::error_handler_t::replace);
@@ -81,6 +88,15 @@ Preset Preset::fromJson(const std::string &text)
     Preset p;
     const Json o = Json::parse(text, nullptr, false);
     if (!o.is_object()) return p;
+    if (o.contains("id") && o["id"].is_string()) p.id = o["id"].get<std::string>();
+    const auto seconds = [](const Json &v) { return v.is_number() ? std::clamp(v.get<double>(), 0.0, 3600.0) : 0.0; };
+    if (o.contains("fade")) p.fade = seconds(o["fade"]);
+    for (auto entry : {std::pair{"times", &p.times}, std::pair{"delays", &p.delays}}) {
+        const auto fields = o.find(entry.first);
+        if (fields != o.end() && fields->is_object())
+            for (auto field = fields->begin(); field != fields->end(); ++field)
+                if (field.value().is_number()) (*entry.second)[field.key()] = seconds(field.value());
+    }
     if (const auto it = o.find("name"); it != o.end() && it->is_string()) p.name = it->get<std::string>();
     if (const auto it = o.find("values"); it != o.end() && it->is_object())
         for (auto e = it->begin(); e != it->end(); ++e) p.values[e.key()] = e.value().dump(-1, ' ', false, Json::error_handler_t::replace);
@@ -143,6 +159,90 @@ RecallResult recall(Tree &tree, const Preset &preset)
         else ++r.missing;
     }
     return r;
+}
+
+namespace {
+double timing(const std::map<std::string, double> &fields, std::string path, double fallback)
+{
+    for (;;) {
+        if (auto it = fields.find(path); it != fields.end()) return it->second;
+        if (path.empty()) return fallback;
+        path.resize(path.rfind('/') == std::string::npos ? 0 : path.rfind('/'));
+    }
+}
+}
+
+Preset Preset::resolved(const Preset &overrides, double fadeOverride) const
+{
+    Preset result = *this;
+    if (fadeOverride >= 0) result.fade = fadeOverride;
+    for (auto &[path, value] : result.values) {
+        if (auto it = overrides.values.find(path); it != overrides.values.end()) value = it->second;
+        result.times[path] = timing(overrides.times, path, timing(times, path, result.fade));
+        result.delays[path] = timing(overrides.delays, path, timing(delays, path, 0));
+    }
+    return result;
+}
+
+double Preset::duration() const
+{
+    double result = 0;
+    for (const auto &[path, value] : values)
+        result = std::max(result, timing(times, path, fade) + timing(delays, path, 0));
+    return result;
+}
+
+void PresetPlayback::start(Tree &tree, const Preset &preset)
+{
+    Preset immediate = preset;
+    immediate.values.clear();
+    for (const auto &[path, value] : preset.values) {
+        m_jobs.erase(path);
+        const Node *node = tree.find(path);
+        if (!node || node->locked || !holdable(*node)) continue;
+        const double delay = timing(preset.delays, path, 0), time = timing(preset.times, path, preset.fade);
+        if (delay + time <= 0) immediate.values[path] = value;
+        else m_jobs[path] = {delay == 0 ? nodeValueJson(*node) : std::string{}, value, delay, time};
+    }
+    recall(tree, immediate);
+}
+
+void PresetPlayback::advance(Tree &tree, double seconds)
+{
+    for (auto it = m_jobs.begin(); it != m_jobs.end();) {
+        auto &[path, job] = *it;
+        job.elapsed += seconds;
+        const Node *node = tree.find(path);
+        if (!node || node->locked || !holdable(*node)) {
+            it = m_jobs.erase(it);
+            continue;
+        }
+        if (job.elapsed >= job.delay + job.time) {
+            tree.apply(path, arguments(job.to));
+            it = m_jobs.erase(it);
+            continue;
+        }
+        if (job.elapsed >= job.delay) {
+            if (job.from.empty()) job.from = nodeValueJson(*node);
+            auto from = arguments(job.from);
+            const auto to = arguments(job.to);
+            const double fraction = (job.elapsed - job.delay) / job.time;
+            const auto a = Json::parse(job.from, nullptr, false), b = Json::parse(job.to, nullptr, false);
+            bool numeric = !from.empty() && from.size() == to.size();
+            for (size_t i = 0; numeric && i < from.size(); ++i) {
+                numeric = a.is_array() && b.is_array() && a.size() == from.size() && b.size() == to.size()
+                    && a[i].is_number() && b[i].is_number();
+                if (numeric) from[i] = Value(a[i].get<double>() + (b[i].get<double>() - a[i].get<double>()) * fraction);
+            }
+            if (numeric) tree.apply(path, from);
+        }
+        ++it;
+    }
+}
+
+void PresetPlayback::finish(Tree &tree)
+{
+    advance(tree, 7200);
 }
 
 } // namespace pxs::core::tree

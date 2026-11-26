@@ -27,6 +27,12 @@ struct Preset {
     std::map<std::string, std::string> values; // address -> its VALUE, a JSON array (one entry per argument)
     std::vector<Action> actions;               // done after the values, in this order
 
+    double fade = 0;
+    std::map<std::string, double> times, delays;
+    std::string id;
+    Preset resolved(const Preset &overrides, double fadeOverride = -1) const;
+    double duration() const;
+
     bool isEmpty() const { return values.empty() && actions.empty(); }
     // The preset as JSON text, and back (a text that is not a JSON object, or members of another type, give what could be read)
     std::string toJson() const;
@@ -45,5 +51,21 @@ struct RecallResult {
 // by hand that is read and written), and these actions
 Preset capture(const Tree &tree, const std::vector<std::string> &only = {}, const std::vector<Preset::Action> &actions = {});
 RecallResult recall(Tree &tree, const Preset &preset);
+
+// The owner advances this with its show clock. A newer recall replaces only overlapping addresses.
+class PresetPlayback {
+public:
+    void start(Tree &tree, const Preset &preset);
+    void advance(Tree &tree, double seconds);
+    void finish(Tree &tree);
+    void clear() { m_jobs.clear(); }
+
+private:
+    struct Job {
+        std::string from, to;
+        double delay, time, elapsed = 0;
+    };
+    std::map<std::string, Job> m_jobs;
+};
 
 } // namespace pxs::core::tree
