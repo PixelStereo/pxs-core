@@ -79,6 +79,8 @@ struct Device {
 
 // The value as 0..1 of the address's range (clamped; an empty range: 0)
 double unit(const Address &a, double value);
+// The native numeric range for a newly patched control. Program Change is a 0/1 trigger.
+int nativeMaximum(Kind kind, const Address &address);
 
 // OSC: the message of a value at a path, of a tag (f, d, i, h, T; another tag is sent as f)
 osc::Message oscMessage(const std::string &path, char type, double value);

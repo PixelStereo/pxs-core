@@ -214,6 +214,16 @@ bool Device::operator==(const Device &o) const
 
 // ---- the wire
 
+int nativeMaximum(Kind kind, const Address &address)
+{
+    if (kind == Kind::Dmx) return address.fine ? 65535 : 255;
+    if (kind == Kind::Midi) {
+        if (address.message == midi::Kind::PitchBend) return 16383;
+        if (address.message != midi::Kind::ProgramChange) return 127;
+    }
+    return 1;
+}
+
 double unit(const Address &a, double value)
 {
     if (!std::isfinite(value) || !(a.max > a.min)) return 0.0;
