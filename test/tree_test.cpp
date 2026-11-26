@@ -474,6 +474,30 @@ void attachedMethodsAreReachedButNotListed()
     CHECK(t.find("/layer/other")->isContainer());
 }
 
+void fireIfChangedSparesTheListeners()
+{
+    // A valued signal fired again and again with the same value from a tick: the listeners are told only when it differs
+    Tree t;
+    std::vector<osc::Message> out;
+    t.setOutput([&](const osc::Message &m) { out.push_back(m); });
+    t.addSignal("/level", "f");
+    t.addSignal("/beat");
+    CHECK(t.fireIfChanged("/level", {Value(0.5)}));
+    CHECK(!t.fireIfChanged("/level", {Value(0.5)})); // the same: not again
+    CHECK(t.fireIfChanged("/level", {Value(0.75)}));
+    CHECK_EQ(out.size(), std::size_t(2));
+    CHECK(t.fireIfChanged("/beat"));
+    CHECK(t.fireIfChanged("/beat")); // an impulse: every one of them is one
+    CHECK(!t.fireIfChanged("/missing", {Value(1.0)}));
+    CHECK_EQ(out.size(), std::size_t(4));
+    // What it fired last is forgotten when the node goes: it comes back firing
+    t.remove("/level");
+    t.addSignal("/level", "f");
+    CHECK(t.fireIfChanged("/level", {Value(0.5)}));
+    t.clear();
+    CHECK(!t.fireIfChanged("/missing", {Value(1.0)}));
+}
+
 } // namespace
 
 int main()
@@ -495,6 +519,7 @@ int main()
     observersSeeEveryWriteOnce();
     anObserverMaySayChangedItself();
     outputAndMessages();
+    fireIfChangedSparesTheListeners();
     conversionsToTheWire();
     nodesAreTheTreesOwn();
     attachedMethodsAreReachedButNotListed();

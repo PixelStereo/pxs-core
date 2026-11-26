@@ -170,6 +170,10 @@ public:
     std::vector<std::string> check() const;
     // Fires a signal (nothing is sent when the path is not a signal), with the arguments its type tags name
     bool fire(const std::string &path, const ValueList &args = {}) const;
+    // Fires a valued signal only when its arguments differ from what it fired last (a signal that says where something is, from a
+    // tick: the listeners are not told the same value twice). An impulse (type "N") fires every time, as it should. False: not a
+    // signal, or the same as last. What was fired last is forgotten when the node goes.
+    bool fireIfChanged(const std::string &path, const ValueList &args = {}) const;
     // Says that a parameter now holds another value (the feedback: its current message goes to the output)
     bool changed(const std::string &path) const;
 
@@ -185,6 +189,7 @@ private:
     int m_nextObserver = 1;
     mutable const Node *m_applying = nullptr; // the node apply() is writing
     mutable bool m_applyNotified = false;
+    mutable std::map<std::string, ValueList> m_fired; // what fireIfChanged fired last, by path
 };
 
 // The OSC type tag of a parameter ("f", "i", "T" for a switch, "s", "N" for an action)
