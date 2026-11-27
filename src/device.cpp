@@ -46,8 +46,12 @@ double finite(double v, double def) { return std::isfinite(v) ? v : def; }
 
 Json addressJson(const Address &a, Kind kind)
 {
-    Json j{{"path", a.path}, {"min", a.min}, {"max", a.max}};
-    if (kind == Kind::Osc) j["type"] = std::string(1, a.type);
+    Json j{{"path", a.path}};
+    if (kind == Kind::Osc) {
+        j["min"] = a.min;
+        j["max"] = a.max;
+        j["type"] = std::string(1, a.type);
+    }
     if (kind == Kind::Dmx) {
         j["channel"] = a.channel;
         j["fine"] = a.fine;
@@ -59,13 +63,15 @@ Json addressJson(const Address &a, Kind kind)
     return j;
 }
 
-Address addressFrom(const Json &j)
+Address addressFrom(const Json &j, Kind kind)
 {
     Address a;
     if (!j.is_object()) return a;
     a.path = j.value("path", std::string());
-    a.min = finite(j.value("min", 0.0), 0.0);
-    a.max = finite(j.value("max", 1.0), 1.0);
+    if (kind == Kind::Osc) {
+        a.min = finite(j.value("min", 0.0), 0.0);
+        a.max = finite(j.value("max", 1.0), 1.0);
+    }
     const std::string type = j.value("type", std::string("f"));
     a.type = type.size() == 1 && isOscType(type[0]) ? type[0] : 'f';
     a.channel = j.value("channel", 1);
@@ -117,7 +123,7 @@ std::optional<Device> deviceFrom(const Json &j)
     if (d.kind != Kind::OscQuery) {
         const Json list = j.value("addresses", Json::array());
         if (list.is_array())
-            for (const Json &a : list) d.addresses.push_back(addressFrom(a));
+            for (const Json &a : list) d.addresses.push_back(addressFrom(a, d.kind));
     }
     return d;
 }
@@ -214,6 +220,16 @@ bool Device::operator==(const Device &o) const
 
 // ---- the wire
 
+int nativeMaximum(Kind kind, const Address &address)
+{
+    if (kind == Kind::Dmx) return address.fine ? 65535 : 255;
+    if (kind == Kind::Midi) {
+        if (address.message == midi::Kind::PitchBend) return 16383;
+        if (address.message != midi::Kind::ProgramChange) return 127;
+    }
+    return 1;
+}
+
 double unit(const Address &a, double value)
 {
     if (!std::isfinite(value) || !(a.max > a.min)) return 0.0;
@@ -262,9 +278,9 @@ std::pair<int, int> dmxChannels(const Device &d, const Address &a)
 
 std::vector<std::uint8_t> dmxBytes(const Address &a, double value)
 {
-    const double u = unit(a, value);
-    if (!a.fine) return {std::uint8_t(std::lround(u * 255.0))};
-    const auto v = std::uint16_t(std::lround(u * 65535.0));
+    const double level = std::clamp(finite(value, 0), 0.0, double(nativeMaximum(Kind::Dmx, a)));
+    if (!a.fine) return {std::uint8_t(std::lround(level))};
+    const auto v = std::uint16_t(std::lround(level));
     return {std::uint8_t(v >> 8), std::uint8_t(v & 0xff)};
 }
 
@@ -279,7 +295,7 @@ bool writeDmx(const Device &d, const Address &a, double value, std::uint8_t *uni
 
 midi::Bytes midiBytes(const Device &d, const Address &a, double value)
 {
-    const double u = unit(a, value);
+    const double u = std::clamp(finite(value, 0), 0.0, double(nativeMaximum(Kind::Midi, a))) / nativeMaximum(Kind::Midi, a);
     switch (a.message) {
     case midi::Kind::ControlChange: return midi::controlChange(d.midiChannel, a.number, u);
     case midi::Kind::Note: return u > 0 ? midi::noteOn(d.midiChannel, a.number, u) : midi::noteOff(d.midiChannel, a.number);

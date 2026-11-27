@@ -54,24 +54,24 @@ void dmxOut()
     d.start = 10;
     Address dimmer = at("/dimmer");
     dimmer.channel = 1;
-    Address pan = at("/pan", -270, 270);
+    Address pan = at("/pan");
     pan.channel = 2;
     pan.fine = true;
     d.addresses = {dimmer, pan};
 
-    CHECK(dmxBytes(dimmer, 0.5) == std::vector<std::uint8_t>{128});
-    CHECK(dmxBytes(dimmer, 2) == std::vector<std::uint8_t>{255}); // clamped
-    CHECK(dmxBytes(pan, 0) == (std::vector<std::uint8_t>{128, 0})); // 32768: coarse then fine
-    CHECK(dmxBytes(pan, 270) == (std::vector<std::uint8_t>{255, 255}));
+    CHECK(dmxBytes(dimmer, 1) == std::vector<std::uint8_t>{1});
+    CHECK(dmxBytes(dimmer, 256) == std::vector<std::uint8_t>{255}); // clamped
+    CHECK(dmxBytes(pan, 32768) == (std::vector<std::uint8_t>{128, 0})); // 32768: coarse then fine
+    CHECK(dmxBytes(pan, 65535) == (std::vector<std::uint8_t>{255, 255}));
     CHECK(dmxBytes(pan, -270) == (std::vector<std::uint8_t>{0, 0}));
-    const auto fine = dmxBytes(pan, -270 + 540.0 * 300 / 65535); // 300 = 0x012C
+    const auto fine = dmxBytes(pan, 300); // 300 = 0x012C
     CHECK(fine == (std::vector<std::uint8_t>{0x01, 0x2C}));
 
     CHECK(dmxChannels(d, dimmer) == std::make_pair(10, 1));
     CHECK(dmxChannels(d, pan) == std::make_pair(11, 2));
     std::array<std::uint8_t, 512> universe{};
-    CHECK(writeDmx(d, dimmer, 1, universe.data(), universe.size()));
-    CHECK(writeDmx(d, pan, 270, universe.data(), universe.size()));
+    CHECK(writeDmx(d, dimmer, 255, universe.data(), universe.size()));
+    CHECK(writeDmx(d, pan, 65535, universe.data(), universe.size()));
     CHECK(universe[9] == 255 && universe[10] == 255 && universe[11] == 255 && universe[8] == 0 && universe[12] == 0);
     CHECK(d.footprint() == 3);
 
@@ -88,17 +88,17 @@ void midiOut()
     Device d;
     d.kind = Kind::Midi;
     d.midiChannel = 2;
-    Address cc = at("/fader", 0, 10);
+    Address cc = at("/fader");
     cc.number = 7;
-    CHECK(midiBytes(d, cc, 10) == (midi::Bytes{0xB1, 7, 127}));
+    CHECK(midiBytes(d, cc, 1) == (midi::Bytes{0xB1, 7, 1}));
     Address note = at("/hit");
     note.message = midi::Kind::Note;
     note.number = 60;
-    CHECK(midiBytes(d, note, 1) == (midi::Bytes{0x91, 60, 127}));
+    CHECK(midiBytes(d, note, 127) == (midi::Bytes{0x91, 60, 127}));
     CHECK(midiBytes(d, note, 0) == midi::noteOff(2, 60));
     Address bend = at("/bend");
     bend.message = midi::Kind::PitchBend;
-    CHECK(midiBytes(d, bend, 0.5) == midi::pitchBend(2, 0.5));
+    CHECK(midiBytes(d, bend, 8191.5) == midi::pitchBend(2, 0.5));
     Address program = at("/scene");
     program.message = midi::Kind::ProgramChange;
     program.number = 5;
@@ -132,7 +132,7 @@ void json()
     d.name = "Spot";
     d.universe = 2;
     d.start = 33;
-    Address pan = at("/pan", -270, 270);
+    Address pan = at("/pan");
     pan.channel = 3;
     pan.fine = true;
     d.addresses = {pan};
