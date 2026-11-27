@@ -3,6 +3,14 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.15.0
+
+### Added
+- Optional source-tree target `pxs-core::rtmidi` for native MIDI ports. Applications can enable the pinned RtMidi backend with
+  `PXS_CORE_BUILD_RTMIDI`; the portable MIDI codec remains available without a native backend.
+- Preset timing inheritance, per-parameter overrides and playback with timeline easing.
+- OSC device namespace segments derived from device names.
+
 ## 0.14.0
 
 ### Added
