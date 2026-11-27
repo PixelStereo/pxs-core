@@ -175,7 +175,6 @@ const char *typeName(ParamInfo::Type t)
 bool RemoteNode::toParamInfo(ParamInfo *out) const
 {
     if (type.size() != 1) return false;
-    if (kind == "signal" && type == "N") return false; // an event with nothing to show
     ParamInfo info;
     info.signal = kind == "signal";
     info.path = path;
@@ -203,7 +202,7 @@ bool RemoteNode::toParamInfo(ParamInfo *out) const
             info.type = ParamInfo::Type::Choice;
             for (const Value &v : r.vals) info.choices.push_back(v.text());
         }
-    } else if (t == 'N') {
+    } else if (isMomentaryAction(type, access)) {
         info.type = ParamInfo::Type::Trigger;
         info.action = true;
     } else {
