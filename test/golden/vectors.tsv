@@ -869,3 +869,12 @@ strnum	c3a9	0	0
 strnum	43686f696365	0	0
 strnum	c38943484f	0	0
 strnum	53747261c39f65	0	0
+
+# OSCQuery momentary action discovery: expected boolean, then the advertised node.
+oscquery-action	1	{"FULL_PATH":"/N","TYPE":"N","ACCESS":2}
+oscquery-action	1	{"FULL_PATH":"/I","TYPE":"I","ACCESS":2}
+oscquery-action	1	{"FULL_PATH":"/both","TYPE":"I","ACCESS":3}
+oscquery-action	0	{"FULL_PATH":"/signal","TYPE":"N","ACCESS":1}
+oscquery-action	0	{"FULL_PATH":"/readonly","TYPE":"I","ACCESS":1}
+oscquery-action	0	{"FULL_PATH":"/disabled","TYPE":"N","ACCESS":0}
+oscquery-action	0	{"FULL_PATH":"/multiple","TYPE":"Ii","ACCESS":2}

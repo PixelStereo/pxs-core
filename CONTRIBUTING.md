@@ -26,3 +26,15 @@ must `reuse lint`.
 
 *This contributor licence is a plain-language text, not legal advice; have it reviewed, or use a CLA service, if the project
 grows.*
+
+### OSCQuery action compatibility
+
+A writable node that advertises exactly `N` (Nil) or `I` (Infinitum) is a
+momentary action. Clients preserve its advertised tag on the wire. Both `,N`
+and `,I` carry one argument encoded entirely by its tag. A lone comma (`,`)
+represents zero arguments. pxs-core advertises parameterless actions as `N`.
+
+The `oscquery-action` rows in [vectors.tsv](test/golden/vectors.tsv) give the
+expected classification and the advertised JSON node. The `osc` rows give the
+exact packet bytes in hex, including the three encodings above. Consumers can
+read the same vectors with their own test runners.

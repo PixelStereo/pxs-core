@@ -13,9 +13,16 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace pxs::core::tree {
+
+// OSCQuery momentary controls use a single Nil or Infinitum tag on a writable node.
+constexpr bool isMomentaryAction(std::string_view type, int access)
+{
+    return (access & ParamInfo::Write) && (type == "N" || type == "I");
+}
 
 struct RemoteNode {
     std::string name;        // its segment ("opacity"); the root's is empty
