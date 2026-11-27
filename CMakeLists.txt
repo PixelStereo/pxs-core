@@ -16,6 +16,11 @@ option(PXS_CORE_INSTALL "Install pxs-core and its CMake package" ${PROJECT_IS_TO
 option(PXS_CORE_WARNINGS_AS_ERRORS "Treat warnings of pxs-core's own sources as errors (CI)" OFF)
 option(PXS_CORE_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC, Clang)" OFF)
 
+option(PXS_CORE_BUILD_RTMIDI "Build the bundled native MIDI backend for source-tree consumers" OFF)
+if(PXS_CORE_BUILD_RTMIDI)
+    include(cmake/RtMidi.cmake)
+endif()
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
