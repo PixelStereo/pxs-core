@@ -88,6 +88,31 @@ void recallPutsTheValuesBack()
     CHECK(s.hits == std::vector<std::string>({"rewind", "cue 3"})); // the actions come after the values, in order
 }
 
+void scopedParametersCanBeRemoved()
+{
+    Tree tree;
+    Cell state{Value(0.5)}, target{Value("/level")}, external{Value(1.0)};
+    auto position = make(state, "position", Type::Float);
+    position->transient().presetValue(true);
+    tree.add("/timelines/light/position", std::move(position));
+    auto destination = make(target, "target", Type::Text);
+    destination->presetValue(false);
+    tree.add("/timelines/light/target", std::move(destination));
+    tree.add("/timelines/lights/position", make(external, "position", Type::Float));
+    const std::string path = "/timelines/light/position";
+    const auto paths = presetParameters(tree, "/timelines/light");
+    CHECK(paths == std::vector<std::string>{path});
+    CHECK(isInPresetScope(path, "/timelines/light"));
+    CHECK(!isInPresetScope("/timelines/lights/position", "/timelines/light"));
+    auto preset = capture(tree, paths);
+    CHECK_EQ(preset.values.at(path), std::string("[0.5]"));
+    preset.times[path] = 1;
+    preset.delays[path] = 2;
+    preset.curves[path] = 3;
+    preset.removeParameter(path);
+    CHECK(preset.isEmpty() && preset.times.empty() && preset.delays.empty() && preset.curves.empty());
+}
+
 void lockedAndMissingAreCounted()
 {
     Show s;
@@ -212,6 +237,7 @@ int main()
 {
     captureHoldsWhatIsStored();
     recallPutsTheValuesBack();
+    scopedParametersCanBeRemoved();
     lockedAndMissingAreCounted();
     aValueThatDoesNotFitIsCountedAsMissing();
     jsonRoundTrip();

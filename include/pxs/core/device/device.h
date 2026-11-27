@@ -36,7 +36,7 @@ std::optional<Kind> kindFromKey(std::string_view key);
 // One number a device takes
 struct Address {
     std::string path;        // what it is called in the device: "/mixer/fader/1" (OSC), "/dimmer", "/pan" (DMX, MIDI)
-    double min = 0, max = 1; // the range of the value given to send (DMX and MIDI: its ends are the ends of the wire's range)
+    double min = 0, max = 1; // declared OSC range
     char type = 'f';         // OSC: f, d, i, h or T
     int channel = 1;         // DMX: 1..512, counted from the device's start address (1: its first channel)
     bool fine = false;       // DMX: 16 bits, on this channel (coarse) and the next (fine)
@@ -79,6 +79,8 @@ struct Device {
 
 // The value as 0..1 of the address's range (clamped; an empty range: 0)
 double unit(const Address &a, double value);
+// The maximum native value for a control. Program Change is a 0/1 trigger.
+int nativeMaximum(Kind kind, const Address &address);
 
 // OSC: the message of a value at a path, of a tag (f, d, i, h, T; another tag is sent as f)
 osc::Message oscMessage(const std::string &path, char type, double value);
@@ -87,12 +89,12 @@ osc::Message oscMessage(const Address &a, double value);
 
 // DMX: the channel the address starts on in its universe (1..512) and how many it takes (1 or 2); {0, 0} when it falls outside
 std::pair<int, int> dmxChannels(const Device &d, const Address &a);
-// The bytes of a value: one (8 bits) or two, coarse then fine (16 bits)
+// The bytes of a value in native DMX units: one (8 bits) or two, coarse then fine (16 bits)
 std::vector<std::uint8_t> dmxBytes(const Address &a, double value);
 // Writes the value in a universe (`size` bytes, channel 1 at index 0); false when it does not fit
 bool writeDmx(const Device &d, const Address &a, double value, std::uint8_t *universe, std::size_t size);
 
-// MIDI: the message of a value on the device's channel (empty: nothing to send, a program change below the middle of its range)
+// MIDI: the message of a value in native MIDI units on the device's channel (empty: nothing to send, a program change below the middle of its range)
 midi::Bytes midiBytes(const Device &d, const Address &a, double value);
 
 // ---- saved

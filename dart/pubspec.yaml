@@ -1,6 +1,6 @@
 name: pxs_core
 description: Dart bindings to pxs-core, the portable core of the Pixel Stereo applications (OSC, OSCQuery, DMX, MIDI, the address space), through its C interface.
-version: 0.15.0
+version: 0.16.0
 repository: https://github.com/PixelStereo/pxs-core
 publish_to: none
 

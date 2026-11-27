@@ -5,6 +5,7 @@
 //
 // No Qt, no global state. Not thread safe by itself: the holder's lock is the caller's (the functions it is bound to run under
 // it), as everywhere in pxs.
+#include <optional>
 #include <pxs/core/feed/change_feed.h>
 #include <pxs/core/value.h>
 
@@ -83,6 +84,7 @@ public:
     Parameter &extendedType(std::string name) { m_info.extendedType = std::move(name); return *this; }
     Parameter &transient(); // read and written, never saved (a state of the show, not of a cue: on / off, solo)
     Parameter &animatable(bool on = true);
+    Parameter &presetValue(bool enabled) { m_presetValue = enabled; return *this; }
     Parameter &colorComponent(int component) { m_info.colorComponent = component; return *this; }
     Parameter &pointComponent(int component) { m_info.pointComponent = component; return *this; }
     Parameter &values(std::vector<int> v); // Int: among these
@@ -120,6 +122,7 @@ public:
     bool reset() { return setValue(info().defaultValue); }
 
     // Its value as a file keeps it (a project, a snapshot, a copied layer): a number, a switch, a key, a text
+    bool isPresetValue() const;
     bool isStored() const; // read and written, not an action
     Value stored() const;  // Float -> double, Int -> int32, Bool -> bool, Choice and Text -> string; Nil for a Trigger
     bool setStored(const Value &v) { return !v.isNil() && setValue(v); }
@@ -128,6 +131,7 @@ private:
     bool writeValue(const Value &v);
 
     ParamInfo m_info;
+    std::optional<bool> m_presetValue;
     Getter m_default, m_get;
     Setter m_set;
     bool m_transient = false;
