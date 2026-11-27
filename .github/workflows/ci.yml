@@ -68,7 +68,9 @@ jobs:
           submodules: true
       - name: Install ALSA headers
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y libasound2-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev
       - name: Configure and build the native backend
         run: |
           cmake -S . -B build -DPXS_CORE_BUILD_RTMIDI=ON -DPXS_CORE_BUILD_TESTS=OFF

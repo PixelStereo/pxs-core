@@ -4,6 +4,7 @@
 #include <pxs/core/tree/tree.h>
 
 #include "check.h"
+#include "golden.h"
 
 #include <algorithm>
 
@@ -60,6 +61,23 @@ void whatIsNotAParameter()
     CHECK(info.defaultValue.isNil()); // no DEFAULT_VALUE: nothing to reset to
 }
 
+void momentaryActions()
+{
+    for (const auto &vector : golden::lines("oscquery-action")) {
+        RemoteTree tree;
+        CHECK(tree.load(vector[2]));
+        const RemoteNode &node = tree.root();
+        const bool expected = vector[1] == "1";
+        CHECK_EQ(isMomentaryAction(node.type, node.access), expected);
+        ParamInfo info;
+        CHECK_EQ(node.toParamInfo(&info), expected);
+        if (expected) {
+            CHECK(info.action && info.type == ParamInfo::Type::Trigger);
+            CHECK(info.access & ParamInfo::Write);
+        }
+    }
+}
+
 void valuesAreFollowed()
 {
     RemoteTree t;
@@ -98,6 +116,7 @@ int main()
 {
     aValueThatHoldsNodesIsAParameter();
     whatIsNotAParameter();
+    momentaryActions();
     valuesAreFollowed();
     whatAServerSaysIsWhatAClientReads();
     return pxs_test::finish("remote");

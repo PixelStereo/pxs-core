@@ -3,6 +3,12 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.17.0
+
+### Added
+- Shared OSCQuery classification of single-tag, writable Nil and Infinitum actions.
+- Cross-language test vectors for action discovery and OSC packets.
+
 ## 0.16.0
 
 ### Added
