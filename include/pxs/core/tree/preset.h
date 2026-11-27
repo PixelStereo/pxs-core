@@ -25,7 +25,6 @@ struct Preset {
 
     std::string name;
     std::string scope; // selected capture scope in the preset library
-    std::map<std::string, std::string> timelines; // stable timeline id -> JSON definition, restored by the application's timeline host
     std::map<std::string, std::string> values; // address -> its VALUE, a JSON array (one entry per argument)
     std::vector<Action> actions;               // done after the values, in this order
 
@@ -39,7 +38,8 @@ struct Preset {
     Preset resolved(const Preset &overrides, double fadeOverride = -1) const;
     double duration() const;
 
-    bool isEmpty() const { return values.empty() && actions.empty() && timelines.empty(); }
+    bool isEmpty() const { return values.empty() && actions.empty(); }
+    void removeParameter(const std::string &path);
     // The preset as JSON text, and back (a text that is not a JSON object, or members of another type, give what could be read)
     std::string toJson() const;
     static Preset fromJson(const std::string &json);
@@ -53,8 +53,10 @@ struct RecallResult {
     int missing = 0; // addresses the tree does not have (or that cannot be written)
 };
 
-// Holds the parameters at these addresses (none: every parameter that is saved, see Parameter::isStored, and every node filled in
-// by hand that is read and written), and these actions
+bool isPresetParameter(const Node &node);
+bool isInPresetScope(const std::string &address, const std::string &scope);
+std::vector<std::string> presetParameters(const Tree &tree, const std::string &scope);
+// Holds the presettable parameters at these addresses (all when omitted), and these actions.
 Preset capture(const Tree &tree, const std::vector<std::string> &only = {}, const std::vector<Preset::Action> &actions = {});
 RecallResult recall(Tree &tree, const Preset &preset);
 

@@ -41,16 +41,9 @@ ValueList arguments(const std::string &arrayJson)
     return out;
 }
 
-// A node a preset may hold: a parameter that is read and written (and, when it has a Parameter, one that is saved)
-bool holdable(const Node &n)
-{
-    if (n.kind() != Kind::Parameter || n.access != 3 || !n.get || !n.set) return false;
-    return !n.parameter() || n.parameter()->isStored();
-}
-
 void collect(const Node &n, std::vector<std::string> &out)
 {
-    if (holdable(n)) out.push_back(n.path());
+    if (isPresetParameter(n)) out.push_back(n.path());
     for (const auto &c : n.children()) collect(*c.second, out);
 }
 
@@ -77,10 +70,6 @@ std::string Preset::toJson() const
     o["values"] = v;
     if (!id.empty()) o["id"] = id;
     if (!scope.empty()) o["scope"] = scope;
-    for (const auto &[timelineId, definition] : timelines) {
-        const auto data = Json::parse(definition, nullptr, false);
-        if (data.is_object()) o["timelines"][timelineId] = data;
-    }
     if (fade > 0) o["fade"] = fade;
     if (!times.empty()) o["times"] = times;
     if (!delays.empty()) o["delays"] = delays;
@@ -110,9 +99,6 @@ Preset Preset::fromJson(const std::string &text)
                 p.curves[field.key()] = int(std::clamp(field.value().get<double>(), 0.0, double(timeline::kEaseCount - 1)));
     if (const auto it = o.find("name"); it != o.end() && it->is_string()) p.name = it->get<std::string>();
     if (const auto it = o.find("scope"); it != o.end() && it->is_string()) p.scope = it->get<std::string>();
-    if (const auto it = o.find("timelines"); it != o.end() && it->is_object())
-        for (auto definition = it->begin(); definition != it->end(); ++definition)
-            if (definition.value().is_object()) p.timelines[definition.key()] = definition.value().dump();
     if (const auto it = o.find("values"); it != o.end() && it->is_object())
         for (auto e = it->begin(); e != it->end(); ++e) p.values[e.key()] = e.value().dump(-1, ' ', false, Json::error_handler_t::replace);
     if (const auto it = o.find("actions"); it != o.end() && it->is_array()) {
@@ -129,6 +115,32 @@ Preset Preset::fromJson(const std::string &text)
     return p;
 }
 
+bool isPresetParameter(const Node &node)
+{
+    return node.kind() == Kind::Parameter && node.access == 3 && node.get && node.set
+        && (!node.parameter() || node.parameter()->isPresetValue());
+}
+
+bool isInPresetScope(const std::string &address, const std::string &scope)
+{
+    return scope.empty() || scope == "/" || address == scope || address.rfind(scope + "/", 0) == 0;
+}
+
+std::vector<std::string> presetParameters(const Tree &tree, const std::string &scope)
+{
+    std::vector<std::string> paths;
+    if (const auto *root = scope.empty() ? &tree.root() : tree.find(scope)) collect(*root, paths);
+    return paths;
+}
+
+void Preset::removeParameter(const std::string &path)
+{
+    values.erase(path);
+    times.erase(path);
+    delays.erase(path);
+    curves.erase(path);
+}
+
 Preset capture(const Tree &tree, const std::vector<std::string> &only, const std::vector<Preset::Action> &actions)
 {
     Preset p;
@@ -136,7 +148,7 @@ Preset capture(const Tree &tree, const std::vector<std::string> &only, const std
     if (paths.empty()) collect(tree.root(), paths);
     for (const std::string &path : paths) {
         const Node *n = tree.find(path);
-        if (!n || !holdable(*n)) continue;
+        if (!n || !isPresetParameter(*n)) continue;
         const std::string value = nodeValueJson(*n);
         if (!value.empty() && value != "[]") p.values[n->path()] = value;
     }
@@ -149,7 +161,7 @@ RecallResult recall(Tree &tree, const Preset &preset)
     RecallResult r;
     for (const auto &entry : preset.values) {
         const Node *n = tree.find(entry.first);
-        if (!n || !holdable(*n)) {
+        if (!n || !isPresetParameter(*n)) {
             ++r.missing;
             continue;
         }
@@ -223,7 +235,7 @@ void PresetPlayback::start(Tree &tree, const Preset &preset)
     for (const auto &[path, value] : preset.values) {
         m_jobs.erase(path);
         const Node *node = tree.find(path);
-        if (!node || node->locked || !holdable(*node)) continue;
+        if (!node || node->locked || !isPresetParameter(*node)) continue;
         const double delay = preset.delayAt(path), time = preset.timeAt(path);
         if (delay + time <= 0) immediate.values[path] = value;
         else m_jobs[path] = {delay == 0 ? nodeValueJson(*node) : std::string{}, value, delay, time, preset.curveAt(path)};
@@ -237,7 +249,7 @@ void PresetPlayback::advance(Tree &tree, double seconds)
         auto &[path, job] = *it;
         job.elapsed += seconds;
         const Node *node = tree.find(path);
-        if (!node || node->locked || !holdable(*node)) {
+        if (!node || node->locked || !isPresetParameter(*node)) {
             it = m_jobs.erase(it);
             continue;
         }

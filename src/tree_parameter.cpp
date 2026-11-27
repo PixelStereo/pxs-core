@@ -149,7 +149,7 @@ ParamInfo Parameter::info() const
     if (m_default) i.defaultValue = m_default();
     i.stored = isStored();
     i.action = (m_info.access & ParamInfo::Write) && m_set && (m_info.type == Type::Trigger || !(m_info.access & ParamInfo::Read));
-    i.presettable = i.stored || m_transient || i.action;
+    i.presettable = m_presetValue.value_or(i.stored || m_transient || i.action);
     return i;
 }
 
@@ -213,6 +213,12 @@ bool Parameter::writeValue(const Value &v)
     case Type::Trigger: m_set(Value()); return true;
     }
     return false;
+}
+
+bool Parameter::isPresetValue() const
+{
+    return m_presetValue.value_or(!m_transient) && m_info.access == ParamInfo::ReadWrite
+        && m_info.type != Type::Trigger && m_get && m_set;
 }
 
 bool Parameter::isStored() const
