@@ -159,6 +159,24 @@ const Address *Device::address(std::string_view path) const
     return nullptr;
 }
 
+ParameterNode parameterTree(const std::vector<std::string> &paths)
+{
+    ParameterNode root;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        const std::string_view path = paths[i];
+        auto *node = &root;
+        std::size_t start = !path.empty() && path.front() == '/' ? 1 : 0;
+        while (start < path.size()) {
+            const auto end = path.find('/', start);
+            node = &node->children[std::string(path.substr(start, end - start))];
+            if (end == std::string_view::npos) break;
+            start = end + 1;
+        }
+        if (!path.empty()) node->parameter = i;
+    }
+    return root;
+}
+
 std::string namespaceSegment(std::string_view name)
 {
     std::string segment;

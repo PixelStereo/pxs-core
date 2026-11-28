@@ -28,6 +28,17 @@ void kinds()
     CHECK(!kindFromKey("artnet"));
 }
 
+void parameterPaths()
+{
+    const auto tree = parameterTree({"/mixer/fader/2", "/transport/play", "/mixer", "/mixer/fader/1"});
+    CHECK(tree.children.size() == 2);
+    const auto &mixer = tree.children.at("mixer");
+    CHECK(mixer.parameter == 2);
+    const auto &faders = mixer.children.at("fader").children;
+    CHECK(faders.at("1").parameter == 3 && faders.at("2").parameter == 0);
+    CHECK(tree.children.at("transport").children.at("play").parameter == 1);
+}
+
 void oscOut()
 {
     const auto f = oscMessage("/a", 'f', 0.25);
@@ -242,6 +253,7 @@ void renamed()
 int main()
 {
     kinds();
+    parameterPaths();
     oscOut();
     dmxOut();
     midiOut();
