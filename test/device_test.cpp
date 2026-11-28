@@ -37,6 +37,10 @@ void parameterPaths()
     const auto &faders = mixer.children.at("fader").children;
     CHECK(faders.at("1").parameter == 3 && faders.at("2").parameter == 0);
     CHECK(tree.children.at("transport").children.at("play").parameter == 1);
+    const auto delimiters = parameterTree({"/", "/color", "/color/"});
+    CHECK(delimiters.parameter == 0);
+    CHECK(delimiters.children.at("color").parameter == 1);
+    CHECK(delimiters.children.at("color").children.at("").parameter == 2);
 }
 
 void oscOut()
