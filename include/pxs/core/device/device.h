@@ -33,6 +33,14 @@ const char *key(Kind k);  // as saved: "oscquery", "osc", "dmx", "midi"
 const char *name(Kind k); // "OSCQuery", "OSC", "DMX", "MIDI"
 std::optional<Kind> kindFromKey(std::string_view key);
 
+// A branch may also be a parameter. Its index refers to the input path list.
+struct ParameterNode {
+    std::optional<std::size_t> parameter;
+    std::map<std::string, ParameterNode> children;
+};
+
+ParameterNode parameterTree(const std::vector<std::string> &paths);
+
 // One number a device takes
 struct Address {
     std::string path;        // what it is called in the device: "/mixer/fader/1" (OSC), "/dimmer", "/pan" (DMX, MIDI)

@@ -3,6 +3,11 @@
 Versions follow [semantic versioning](https://semver.org). A change of what goes on the wire, of a limit, or of what a
 decoder accepts is breaking unless it only makes a decoder stricter for packets no conforming peer sends.
 
+## 0.18.0
+
+### Added
+- A shared device parameter tree that groups complete addresses by their path segments.
+
 ## 0.17.0
 
 ### Added
